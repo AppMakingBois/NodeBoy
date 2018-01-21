@@ -2,8 +2,7 @@ package io.github.appmakingbois.nodeboy.protocol;
 
 import java.util.UUID;
 
-public abstract class Packet
-{
+public abstract class Packet {
     /**
      * The current version of the protocol; sent in Announce packets (see {@link io.github.appmakingbois.nodeboy.protocol.packets.AnnouncePacket}).
      */
@@ -16,6 +15,10 @@ public abstract class Packet
      * The UUID of this specific packet. You can use this to ignore a packet you have already received.
      */
     protected UUID packetUUID;
+    /**
+     * The ID of the client who sent this packet.
+     */
+    protected UUID clientID;
 
     /**
      * @return The packet ID of this packet
@@ -27,39 +30,52 @@ public abstract class Packet
      * @return The UUID of this specific packet
      * @see Packet#packetUUID
      */
-    public UUID getPacketUUID(){
+    public UUID getPacketUUID() {
         return this.packetUUID;
     }
 
-    public Packet(boolean rebroadcasted){
+    /**
+     * @return The ID of the client who sent this packet
+     * @see Packet#clientID
+     */
+    public UUID getClientID() {
+        return this.clientID;
+    }
+
+    public Packet(boolean rebroadcasted, UUID clientID) {
         this.rebroadcasted = rebroadcasted;
         this.packetUUID = UUID.randomUUID();
+        if (clientID == null) {
+            throw new IllegalArgumentException("clientID cannot be null!");
+        }
+        this.clientID = clientID;
     }
-    public Packet(){
-        this(false);
+    public Packet(UUID clientID){
+        this(false,clientID);
     }
 
     /**
      * Marks this packet as rebroadcasted.
+     *
      * @see Packet#isRebroadcasted()
      */
-    public void setRebroadcasted(){
+    public void setRebroadcasted() {
         this.rebroadcasted = true;
     }
 
     /**
      * Returns rebroadcasted status; i.e. whether or not the packet has been forwarded from another client
+     *
      * @return {@code true} if the packet is rebroadcasted and {@code false} if not
      */
-    public boolean isRebroadcasted(){
+    public boolean isRebroadcasted() {
         return this.rebroadcasted;
     }
 
     /**
      * Contains definitions for packet IDs
      */
-    public static class ID
-    {
+    public static class ID {
         //packet ID definitions below
         /**
          * The ID of the Announce packet

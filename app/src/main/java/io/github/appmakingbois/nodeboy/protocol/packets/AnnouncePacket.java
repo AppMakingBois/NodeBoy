@@ -7,16 +7,22 @@ import io.github.appmakingbois.nodeboy.protocol.Packet;
 public class AnnouncePacket extends Packet
 {
     private int protocolVersion;
-    private UUID clientID;
 
-    private AnnouncePacket(int protocolVersion, UUID clientID){
-        super();
+    private AnnouncePacket(boolean rebroadcasted, UUID clientID, int protocolVersion){
+        super(rebroadcasted, clientID);
         this.protocolVersion = protocolVersion;
-        this.clientID = clientID;
+    }
+
+    private AnnouncePacket(UUID clientID, int protocolVersion){
+        this(false,clientID,protocolVersion);
+    }
+
+    public AnnouncePacket(boolean rebroadcasted, UUID clientID){
+        this(rebroadcasted,clientID,Packet.PROTOCOL_VERSION);
     }
 
     public AnnouncePacket(UUID clientID){
-        this(Packet.PROTOCOL_VERSION,clientID);
+        this(clientID,Packet.PROTOCOL_VERSION);
     }
 
     @Override
@@ -29,7 +35,4 @@ public class AnnouncePacket extends Packet
         return this.protocolVersion;
     }
 
-    public UUID getClientID(){
-        return this.clientID;
-    }
 }
