@@ -6,7 +6,7 @@ public abstract class Packet {
     /**
      * The current version of the protocol; sent in Announce packets (see {@link io.github.appmakingbois.nodeboy.protocol.packets.AnnouncePacket}).
      */
-    public static int PROTOCOL_VERSION = 2;
+    public static int PROTOCOL_VERSION = 3;
     /**
      * Whether or not the packet has been forwarded from another client
      */
