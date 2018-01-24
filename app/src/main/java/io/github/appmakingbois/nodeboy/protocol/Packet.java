@@ -1,5 +1,6 @@
 package io.github.appmakingbois.nodeboy.protocol;
 
+import java.util.ArrayList;
 import java.util.UUID;
 
 public abstract class Packet {
@@ -70,6 +71,14 @@ public abstract class Packet {
      */
     public boolean isRebroadcasted() {
         return this.rebroadcasted;
+    }
+
+    public byte[] serialize() {
+        PacketEncoder encoder = new PacketEncoder();
+        encoder.putInt(this.getPacketID());
+        encoder.putBoolean(this.isRebroadcasted());
+        encoder.putUUID(clientID);
+        return encoder.finalPacket();
     }
 
     /**
