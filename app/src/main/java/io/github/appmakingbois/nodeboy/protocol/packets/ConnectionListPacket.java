@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.UUID;
 
 import io.github.appmakingbois.nodeboy.protocol.Packet;
+import io.github.appmakingbois.nodeboy.protocol.PacketEncoder;
 
 public class ConnectionListPacket extends Packet {
     private ArrayList<UUID> peerIDs;
@@ -30,5 +31,14 @@ public class ConnectionListPacket extends Packet {
 
     public ArrayList<UUID> getPeerIDs() {
         return peerIDs;
+    }
+
+    public byte[] serialize(){
+        PacketEncoder encoder = new PacketEncoder(super.serialize());
+        encoder.putInt(peerIDs.size());
+        for(UUID current : peerIDs){
+            encoder.putUUID(current);
+        }
+        return encoder.finalPacket();
     }
 }
