@@ -5,14 +5,7 @@ import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.UUID;
 
-public class EncodeHelper {
-    public static byte[] encodeUUID(UUID uuid){
-        ByteBuffer bb = ByteBuffer.wrap(new byte[16]);
-        bb.putLong(uuid.getMostSignificantBits());
-        bb.putLong(uuid.getLeastSignificantBits());
-        return bb.array();
-    }
-
+public class PacketDecoder {
     public static UUID decodeUUID(byte[] bytes){
         ByteBuffer bb = ByteBuffer.wrap(bytes);
         long high = bb.getLong();
@@ -20,28 +13,8 @@ public class EncodeHelper {
         return new UUID(high, low);
     }
 
-    public static byte encodeBoolean(boolean input){
-        return (byte)(input ? 0x01 : 0x00);
-    }
-
     public static boolean decodeBoolean(byte input){
         return input != 0x00;
-    }
-
-    public static byte[] encodeVarInt(int input){
-        ArrayList<Byte> outputTemp = new ArrayList<>();
-        int i = 0;
-        do {
-            byte temp = (byte)(input & 0b01111111);
-            // Note: >>> means that the sign bit is shifted with the rest of the number rather than being left alone
-            input >>>= 7;
-            if (input != 0) {
-                temp |= 0b10000000;
-            }
-            outputTemp.add(temp);
-            i++;
-        } while (input != 0);
-        return byteListToArray(outputTemp);
     }
 
     public static int decodeVarInt(byte[] input){
@@ -60,22 +33,6 @@ public class EncodeHelper {
         } while ((read & 0b10000000) != 0);
 
         return result;
-    }
-
-    public static byte[] encodeVarLong(long input){
-        ArrayList<Byte> outputTemp = new ArrayList<>();
-        int i = 0;
-        do {
-            byte temp = (byte)(input & 0b01111111);
-            // Note: >>> means that the sign bit is shifted with the rest of the number rather than being left alone
-            input >>>= 7;
-            if (input != 0) {
-                temp |= 0b10000000;
-            }
-            outputTemp.add(temp);
-            i++;
-        } while (input != 0);
-        return byteListToArray(outputTemp);
     }
 
     public static long decodeVarLong(byte[] input){
