@@ -3,6 +3,7 @@ package io.github.appmakingbois.nodeboy.protocol.packets;
 import java.util.UUID;
 
 import io.github.appmakingbois.nodeboy.protocol.Packet;
+import io.github.appmakingbois.nodeboy.protocol.PacketEncoder;
 
 
 public class DataPayloadPacket extends Packet {
@@ -23,5 +24,11 @@ public class DataPayloadPacket extends Packet {
 
   public byte[] getData() {
     return data;
+  }
+
+  public byte[] serialize() {
+    PacketEncoder encoder = new PacketEncoder(super.serialize());
+    encoder.putBytes(data);
+    return encoder.finalPacket();
   }
 }
