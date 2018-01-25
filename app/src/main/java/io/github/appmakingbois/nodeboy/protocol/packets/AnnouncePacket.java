@@ -3,6 +3,7 @@ package io.github.appmakingbois.nodeboy.protocol.packets;
 import java.util.UUID;
 
 import io.github.appmakingbois.nodeboy.protocol.Packet;
+import io.github.appmakingbois.nodeboy.protocol.PacketEncoder;
 
 public class AnnouncePacket extends Packet
 {
@@ -33,6 +34,13 @@ public class AnnouncePacket extends Packet
 
     public int getProtocolVersion(){
         return this.protocolVersion;
+    }
+
+    public byte[] serialize()
+    {
+        PacketEncoder encoder = new PacketEncoder(super.serialize());
+        encoder.putInt(protocolVersion);
+        return encoder.finalPacket();
     }
 
 }
