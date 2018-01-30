@@ -4,7 +4,6 @@ package io.github.appmakingbois.nodeboy;
 import org.junit.Test;
 
 import java.util.UUID;
-import java.util.regex.Pattern;
 
 import io.github.appmakingbois.nodeboy.protocol.PacketDecoder;
 import io.github.appmakingbois.nodeboy.protocol.PacketEncoder;
