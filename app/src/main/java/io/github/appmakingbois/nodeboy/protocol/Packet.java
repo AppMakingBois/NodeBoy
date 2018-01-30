@@ -54,6 +54,20 @@ public abstract class Packet {
     public Packet(UUID clientID){
         this(false,clientID);
     }
+    public Packet(byte[] encodedData){
+        PacketDecoder decoder = new PacketDecoder(encodedData);
+        int packetID = decoder.getInt();
+        if(packetID!=getPacketID()){
+            throw new IllegalArgumentException("Invalid packet type! (Expected packet ID "+getPacketID()+", got "+packetID+")");
+        }
+        UUID packetUUID = decoder.getUUID();
+        boolean rebroadcasted = decoder.getBoolean();
+        UUID clientID = decoder.getUUID();
+
+        this.packetUUID = packetUUID;
+        this.rebroadcasted = rebroadcasted;
+        this.clientID = clientID;
+    }
 
     /**
      * Marks this packet as rebroadcasted.
@@ -76,6 +90,7 @@ public abstract class Packet {
     public byte[] serialize() {
         PacketEncoder encoder = new PacketEncoder();
         encoder.putInt(this.getPacketID());
+        encoder.putUUID(this.getPacketUUID());
         encoder.putBoolean(this.isRebroadcasted());
         encoder.putUUID(clientID);
         return encoder.finalPacket();
