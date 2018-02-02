@@ -18,7 +18,6 @@ public class PacketEncoder {
         contents = new ArrayList<>();
         ArrayList<Byte> packetLength = new ArrayList<>();
         ArrayList<Byte> tempContents = byteArrayToList(existingBytes);
-
         int packetLengthBytes = PacketDecoder.testVarInt(byteListToArray(tempContents));
         for (int i = 0; i < packetLengthBytes; i++) {
             packetLength.add(tempContents.get(0));
@@ -31,7 +30,6 @@ public class PacketEncoder {
         else {
             this.length = len;
         }
-
         this.putBytes(tempContents);
     }
 
@@ -39,8 +37,7 @@ public class PacketEncoder {
         ByteBuffer bb = ByteBuffer.wrap(new byte[16]);
         bb.putLong(uuid.getMostSignificantBits());
         bb.putLong(uuid.getLeastSignificantBits());
-        byte[] array = bb.array();
-        return array;
+        return bb.array();
     }
 
     public static byte encodeBoolean(boolean input) {

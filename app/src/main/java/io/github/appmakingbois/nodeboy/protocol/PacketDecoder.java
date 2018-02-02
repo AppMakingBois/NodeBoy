@@ -11,10 +11,7 @@ public class PacketDecoder {
 
     public PacketDecoder(byte[] input) {
         this.contents = byteArrayToList(input);
-        
         int len = getInt();
-        
-        
         if (len != contents.size()) {
             throw new RuntimeException("Packet length is invalid! Your data could be incomplete or corrupt.");
         }
@@ -30,10 +27,10 @@ public class PacketDecoder {
     /**
      * Attempts to strip the standard packet fields from the beginning (packet ID, packet UUID, rebroadcast status, and client UUID.)
      * This is useful if you are extending {@link Packet} and have already called the superclass constructor, which takes care of decoding this data. This allows you to quickly jump to the rest of the data.
-     *
+     * <p>
      * Throws any exceptions encountered during trying to read this data.
      */
-    public void stripHeader(){
+    public void stripHeader() {
         this.getInt();
         this.getUUID();
         this.getBoolean();
@@ -42,7 +39,6 @@ public class PacketDecoder {
 
     public int getInt() {
         int len = testVarInt(byteListToArray(contents));
-        
         if (len == -1) {
             throw new RuntimeException("VarInt could not be read! You could be trying to read a VarLong instead.");
         }
@@ -52,11 +48,8 @@ public class PacketDecoder {
         byte[] input = new byte[len];
         for (int i = 0; i < len; i++) {
             input[i] = readByte();
-            
         }
-        int decoded = decodeVarInt(input);
-        
-        return decoded;
+        return decodeVarInt(input);
     }
 
     public long getLong() {
@@ -85,40 +78,40 @@ public class PacketDecoder {
         return decodeUUID(data);
     }
 
-    public boolean getBoolean(){
-        if (contents.size() < 1){
+    public boolean getBoolean() {
+        if (contents.size() < 1) {
             throw new RuntimeException("No bytes left! If you expected more data, your data could be corrupt.");
         }
         byte b = readByte();
         return decodeBoolean(b);
     }
 
-    public byte getByte(){
-        if (contents.size() < 1){
+    public byte getByte() {
+        if (contents.size() < 1) {
             throw new RuntimeException("No bytes left! If you expected more data, your data could be corrupt.");
         }
         return readByte();
     }
 
-    public byte[] getBytes(int number){
-        if(number<1){
+    public byte[] getBytes(int number) {
+        if (number < 1) {
             throw new IllegalArgumentException("Cannot read a number of bytes less than 1!");
         }
-        if(contents.size() < number){
-            throw new RuntimeException("Not enough bytes to read "+number+" bytes! If you expected more data, your data could be corrupt.");
+        if (contents.size() < number) {
+            throw new RuntimeException("Not enough bytes to read " + number + " bytes! If you expected more data, your data could be corrupt.");
         }
         byte[] output = new byte[number];
-        for(int i = 0; i < number; i++){
+        for (int i = 0; i < number; i++) {
             output[i] = readByte();
         }
         return output;
     }
 
-    public int getNumberOfBytesRemaining(){
+    public int getNumberOfBytesRemaining() {
         return contents.size();
     }
 
-    public int getPacketLength(){
+    public int getPacketLength() {
         return length;
     }
 
@@ -141,13 +134,11 @@ public class PacketDecoder {
             read = input[numRead];
             int value = (read & 0b01111111);
             result |= (value << (7 * numRead));
-
             numRead++;
             if (numRead > 5) {
                 throw new RuntimeException("VarInt is too big");
             }
         } while ((read & 0b10000000) != 0);
-
         return result;
     }
 
@@ -162,7 +153,6 @@ public class PacketDecoder {
                     return -1;
                 }
             } while ((read & 0b10000000) != 0);
-
             return numRead;
         } catch (ArrayIndexOutOfBoundsException e) {
             return -2;
@@ -177,7 +167,6 @@ public class PacketDecoder {
             read = input[numRead];
             int value = (read & 0b01111111);
             result |= (value << (7 * numRead));
-
             numRead++;
             if (numRead > 10) {
                 throw new RuntimeException("VarLong is too big");
