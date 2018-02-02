@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.UUID;
 
 import io.github.appmakingbois.nodeboy.protocol.Packet;
+import io.github.appmakingbois.nodeboy.protocol.PacketDecoder;
 import io.github.appmakingbois.nodeboy.protocol.PacketEncoder;
 
 public class ConnectionListPacket extends Packet {
@@ -18,6 +19,17 @@ public class ConnectionListPacket extends Packet {
 
     public ConnectionListPacket(UUID clientID, ArrayList<UUID> peerIDs) {
         this(false,clientID,peerIDs);
+    }
+
+    public ConnectionListPacket(byte[] encodedData){
+        super(encodedData);
+        PacketDecoder decoder = new PacketDecoder(encodedData);
+        decoder.stripHeader();
+        int length = decoder.getInt();
+        peerIDs = new ArrayList<>();
+        for(int i = 0; i<length; i++){
+            peerIDs.add(decoder.getUUID());
+        }
     }
 
     /**
