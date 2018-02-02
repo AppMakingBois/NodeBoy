@@ -8,12 +8,14 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.assertEquals;
 
 import java.util.ArrayList;
+import java.util.Random;
 import java.util.UUID;
 
 import io.github.appmakingbois.nodeboy.protocol.Packet;
 import io.github.appmakingbois.nodeboy.protocol.PacketDecoder;
 import io.github.appmakingbois.nodeboy.protocol.packets.AnnouncePacket;
 import io.github.appmakingbois.nodeboy.protocol.packets.ConnectionListPacket;
+import io.github.appmakingbois.nodeboy.protocol.packets.DataPayloadPacket;
 
 public class PacketEncodeTests {
     @Test
@@ -57,6 +59,35 @@ public class PacketEncodeTests {
             assertTrue(current.compareTo(p2.getPeerIDs().get(i))== 0);
             i++;
         }
+        System.out.println("Success");
+    }
+
+    @Test
+    public void testDataPayloadPacket() {
+        System.out.print("Testing if encoding/decoding a DataPayloadPacket works... ");
+        UUID clientID = UUID.randomUUID();
+        Random r = new Random();
+        byte[] data = new byte[18];
+        r.nextBytes(data);
+        for(byte b : data){
+            System.out.print(b+", ");
+        }
+        System.out.println(" ");
+        DataPayloadPacket p = new DataPayloadPacket(clientID,data);
+
+        byte[] encoded = p.serialize();
+        DataPayloadPacket p2 = new DataPayloadPacket(encoded);
+        assertEquals(p.getPacketID(), Packet.ID.DATA_PAYLOAD);
+        assertEquals(p2.getPacketID(), Packet.ID.DATA_PAYLOAD);
+        assertTrue(p.getClientID().compareTo(p2.getClientID())==0);
+        assertTrue(p.getPacketUUID().compareTo(p2.getPacketUUID())==0);
+        assertEquals(p.isRebroadcasted(), p2.isRebroadcasted());
+        assertArrayEquals(data,p.getData());
+        for(byte b : p2.getData()){
+            System.out.print(b+", ");
+        }
+        assertArrayEquals(data,p2.getData());
+
         System.out.println("Success");
     }
 }
