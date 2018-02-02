@@ -11,7 +11,10 @@ public class PacketDecoder {
 
     public PacketDecoder(byte[] input) {
         this.contents = byteArrayToList(input);
+        
         int len = getInt();
+        
+        
         if (len != contents.size()) {
             throw new RuntimeException("Packet length is invalid! Your data could be incomplete or corrupt.");
         }
@@ -24,8 +27,22 @@ public class PacketDecoder {
         return val;
     }
 
+    /**
+     * Attempts to strip the standard packet fields from the beginning (packet ID, packet UUID, rebroadcast status, and client UUID.)
+     * This is useful if you are extending {@link Packet} and have already called the superclass constructor, which takes care of decoding this data. This allows you to quickly jump to the rest of the data.
+     *
+     * Throws any exceptions encountered during trying to read this data.
+     */
+    public void stripHeader(){
+        this.getInt();
+        this.getUUID();
+        this.getBoolean();
+        this.getUUID();
+    }
+
     public int getInt() {
         int len = testVarInt(byteListToArray(contents));
+        
         if (len == -1) {
             throw new RuntimeException("VarInt could not be read! You could be trying to read a VarLong instead.");
         }
@@ -35,8 +52,11 @@ public class PacketDecoder {
         byte[] input = new byte[len];
         for (int i = 0; i < len; i++) {
             input[i] = readByte();
+            
         }
-        return decodeVarInt(input);
+        int decoded = decodeVarInt(input);
+        
+        return decoded;
     }
 
     public long getLong() {
@@ -131,7 +151,7 @@ public class PacketDecoder {
         return result;
     }
 
-    private int testVarInt(byte[] input) {
+    static int testVarInt(byte[] input) {
         int numRead = 0;
         byte read;
         try {
@@ -143,7 +163,7 @@ public class PacketDecoder {
                 }
             } while ((read & 0b10000000) != 0);
 
-            return numRead + 1;
+            return numRead;
         } catch (ArrayIndexOutOfBoundsException e) {
             return -2;
         }
@@ -167,7 +187,7 @@ public class PacketDecoder {
         return result;
     }
 
-    private int testVarLong(byte[] input) {
+    static int testVarLong(byte[] input) {
         int numRead = 0;
         byte read;
         try {
@@ -178,7 +198,7 @@ public class PacketDecoder {
                     return -1;
                 }
             } while ((read & 0b10000000) != 0);
-            return numRead + 1;
+            return numRead;
         } catch (ArrayIndexOutOfBoundsException e) {
             return -2;
         }

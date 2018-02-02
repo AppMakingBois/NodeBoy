@@ -92,7 +92,7 @@ public abstract class Packet {
         encoder.putInt(this.getPacketID());
         encoder.putUUID(this.getPacketUUID());
         encoder.putBoolean(this.isRebroadcasted());
-        encoder.putUUID(clientID);
+        encoder.putUUID(this.getClientID());
         return encoder.finalPacket();
     }
 
