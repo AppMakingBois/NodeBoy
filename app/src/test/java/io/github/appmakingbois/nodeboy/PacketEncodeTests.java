@@ -11,6 +11,7 @@ import io.github.appmakingbois.nodeboy.protocol.packets.AnnouncePacket;
 import io.github.appmakingbois.nodeboy.protocol.packets.ConnectionListPacket;
 import io.github.appmakingbois.nodeboy.protocol.packets.DataPayloadPacket;
 import io.github.appmakingbois.nodeboy.protocol.packets.DisconnectPacket;
+import io.github.appmakingbois.nodeboy.protocol.packets.KeepAlivePacket;
 
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
@@ -97,6 +98,24 @@ public class PacketEncodeTests {
         DisconnectPacket p2 = new DisconnectPacket(encoded);
         assertEquals(p.getPacketID(), Packet.ID.DISCONNECT);
         assertEquals(p2.getPacketID(), Packet.ID.DISCONNECT);
+        assertTrue(p.getClientID().compareTo(p2.getClientID())==0);
+        assertTrue(p.getPacketUUID().compareTo(p2.getPacketUUID())==0);
+        assertEquals(p.isRebroadcasted(),p2.isRebroadcasted());
+        System.out.println("Success");
+    }
+
+    @Test
+    public void testKeepAlivePacket() {
+        System.out.print("Testing if encoding/decoding a KeepAlivePacket works... ");
+        UUID clientID = UUID.randomUUID();
+        Random r = new Random();
+        boolean rebroadcasted = r.nextBoolean();
+        KeepAlivePacket p = new KeepAlivePacket(rebroadcasted,clientID);
+
+        byte[] encoded = p.serialize();
+        KeepAlivePacket p2 = new KeepAlivePacket(encoded);
+        assertEquals(p.getPacketID(), Packet.ID.KEEP_ALIVE);
+        assertEquals(p2.getPacketID(), Packet.ID.KEEP_ALIVE);
         assertTrue(p.getClientID().compareTo(p2.getClientID())==0);
         assertTrue(p.getPacketUUID().compareTo(p2.getPacketUUID())==0);
         assertEquals(p.isRebroadcasted(),p2.isRebroadcasted());

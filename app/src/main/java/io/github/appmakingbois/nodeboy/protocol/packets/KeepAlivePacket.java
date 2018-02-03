@@ -14,6 +14,10 @@ public class KeepAlivePacket extends Packet {
         super(clientID);
     }
 
+    public KeepAlivePacket(byte[] encodedData){
+        super(encodedData);
+    }
+
     /**
      * @return The packet ID of this packet
      * @see ID
