@@ -14,6 +14,10 @@ public class DisconnectPacket extends Packet {
     super(clientID);
   }
 
+  public DisconnectPacket(byte[] encodedData){
+    super(encodedData);
+  }
+
   @Override
   public byte getPacketID() {
     return ID.DISCONNECT;

@@ -10,6 +10,7 @@ import io.github.appmakingbois.nodeboy.protocol.Packet;
 import io.github.appmakingbois.nodeboy.protocol.packets.AnnouncePacket;
 import io.github.appmakingbois.nodeboy.protocol.packets.ConnectionListPacket;
 import io.github.appmakingbois.nodeboy.protocol.packets.DataPayloadPacket;
+import io.github.appmakingbois.nodeboy.protocol.packets.DisconnectPacket;
 
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
@@ -68,7 +69,8 @@ public class PacketEncodeTests {
         Random r = new Random();
         byte[] data = new byte[18];
         r.nextBytes(data);
-        DataPayloadPacket p = new DataPayloadPacket(clientID,data);
+        boolean rebroadcasted = r.nextBoolean();
+        DataPayloadPacket p = new DataPayloadPacket(rebroadcasted,clientID,data);
 
         byte[] encoded = p.serialize();
         DataPayloadPacket p2 = new DataPayloadPacket(encoded);
@@ -80,6 +82,24 @@ public class PacketEncodeTests {
         assertArrayEquals(data,p.getData());
         assertArrayEquals(data,p2.getData());
 
+        System.out.println("Success");
+    }
+
+    @Test
+    public void testDisconnectPacket() {
+        System.out.print("Testing if encoding/decoding a DisconnectPacket works... ");
+        UUID clientID = UUID.randomUUID();
+        Random r = new Random();
+        boolean rebroadcasted = r.nextBoolean();
+        DisconnectPacket p = new DisconnectPacket(rebroadcasted,clientID);
+
+        byte[] encoded = p.serialize();
+        DisconnectPacket p2 = new DisconnectPacket(encoded);
+        assertEquals(p.getPacketID(), Packet.ID.DISCONNECT);
+        assertEquals(p2.getPacketID(), Packet.ID.DISCONNECT);
+        assertTrue(p.getClientID().compareTo(p2.getClientID())==0);
+        assertTrue(p.getPacketUUID().compareTo(p2.getPacketUUID())==0);
+        assertEquals(p.isRebroadcasted(),p2.isRebroadcasted());
         System.out.println("Success");
     }
 }
