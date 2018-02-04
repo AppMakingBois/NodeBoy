@@ -13,6 +13,7 @@ import io.github.appmakingbois.nodeboy.protocol.packets.DataPayloadPacket;
 import io.github.appmakingbois.nodeboy.protocol.packets.DisconnectPacket;
 import io.github.appmakingbois.nodeboy.protocol.packets.KeepAlivePacket;
 import io.github.appmakingbois.nodeboy.protocol.packets.RequestClientInfoPacket;
+import io.github.appmakingbois.nodeboy.protocol.packets.RequestConnectionListPacket;
 
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
@@ -136,6 +137,26 @@ public class PacketEncodeTests {
         RequestClientInfoPacket p2 = new RequestClientInfoPacket(encoded);
         assertEquals(p.getPacketID(), Packet.ID.REQUEST_CLIENT_INFO);
         assertEquals(p2.getPacketID(), Packet.ID.REQUEST_CLIENT_INFO);
+        assertTrue(p.getClientID().compareTo(p2.getClientID())==0);
+        assertTrue(p.getPacketUUID().compareTo(p2.getPacketUUID())==0);
+        assertTrue(p.getRecipientID().compareTo(p2.getRecipientID())==0);
+        assertEquals(p.isRebroadcasted(),p2.isRebroadcasted());
+        System.out.println("Success");
+    }
+
+    @Test
+    public void testRequestConnectionListPacket() {
+        System.out.print("Testing if encoding/decoding a RequestConnectionListPacket works... ");
+        UUID clientID = UUID.randomUUID();
+        UUID recipientID = UUID.randomUUID();
+        Random r = new Random();
+        boolean rebroadcasted = r.nextBoolean();
+        RequestConnectionListPacket p = new RequestConnectionListPacket(rebroadcasted,clientID,recipientID);
+
+        byte[] encoded = p.serialize();
+        RequestConnectionListPacket p2 = new RequestConnectionListPacket(encoded);
+        assertEquals(p.getPacketID(), Packet.ID.REQUEST_CONNECTION_LIST);
+        assertEquals(p2.getPacketID(), Packet.ID.REQUEST_CONNECTION_LIST);
         assertTrue(p.getClientID().compareTo(p2.getClientID())==0);
         assertTrue(p.getPacketUUID().compareTo(p2.getPacketUUID())==0);
         assertTrue(p.getRecipientID().compareTo(p2.getRecipientID())==0);

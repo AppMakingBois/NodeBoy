@@ -3,6 +3,7 @@ package io.github.appmakingbois.nodeboy.protocol.packets;
 import java.util.UUID;
 
 import io.github.appmakingbois.nodeboy.protocol.Packet;
+import io.github.appmakingbois.nodeboy.protocol.PacketDecoder;
 import io.github.appmakingbois.nodeboy.protocol.PacketEncoder;
 
 public class RequestConnectionListPacket extends Packet
@@ -23,8 +24,15 @@ public class RequestConnectionListPacket extends Packet
         this.recipientID = recipientID;
     }
 
-    private RequestConnectionListPacket(UUID clientID, UUID recipientID){
+    public RequestConnectionListPacket(UUID clientID, UUID recipientID){
         this(false,clientID,recipientID);
+    }
+
+    public RequestConnectionListPacket(byte[] encodedData){
+        super(encodedData);
+        PacketDecoder decoder = new PacketDecoder(encodedData);
+        decoder.stripHeader();
+        this.recipientID = decoder.getUUID();
     }
 
     public UUID getRecipientID() {
