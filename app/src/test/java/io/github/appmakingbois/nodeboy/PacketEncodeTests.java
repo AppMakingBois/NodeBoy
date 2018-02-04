@@ -12,6 +12,7 @@ import io.github.appmakingbois.nodeboy.protocol.packets.ConnectionListPacket;
 import io.github.appmakingbois.nodeboy.protocol.packets.DataPayloadPacket;
 import io.github.appmakingbois.nodeboy.protocol.packets.DisconnectPacket;
 import io.github.appmakingbois.nodeboy.protocol.packets.KeepAlivePacket;
+import io.github.appmakingbois.nodeboy.protocol.packets.RequestClientInfoPacket;
 
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
@@ -118,6 +119,26 @@ public class PacketEncodeTests {
         assertEquals(p2.getPacketID(), Packet.ID.KEEP_ALIVE);
         assertTrue(p.getClientID().compareTo(p2.getClientID())==0);
         assertTrue(p.getPacketUUID().compareTo(p2.getPacketUUID())==0);
+        assertEquals(p.isRebroadcasted(),p2.isRebroadcasted());
+        System.out.println("Success");
+    }
+
+    @Test
+    public void testRequestClientInfoPacket() {
+        System.out.print("Testing if encoding/decoding a RequestClientInfoPacket works... ");
+        UUID clientID = UUID.randomUUID();
+        UUID recipientID = UUID.randomUUID();
+        Random r = new Random();
+        boolean rebroadcasted = r.nextBoolean();
+        RequestClientInfoPacket p = new RequestClientInfoPacket(rebroadcasted,clientID,recipientID);
+
+        byte[] encoded = p.serialize();
+        RequestClientInfoPacket p2 = new RequestClientInfoPacket(encoded);
+        assertEquals(p.getPacketID(), Packet.ID.REQUEST_CLIENT_INFO);
+        assertEquals(p2.getPacketID(), Packet.ID.REQUEST_CLIENT_INFO);
+        assertTrue(p.getClientID().compareTo(p2.getClientID())==0);
+        assertTrue(p.getPacketUUID().compareTo(p2.getPacketUUID())==0);
+        assertTrue(p.getRecipientID().compareTo(p2.getRecipientID())==0);
         assertEquals(p.isRebroadcasted(),p2.isRebroadcasted());
         System.out.println("Success");
     }
