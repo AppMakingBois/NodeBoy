@@ -8,12 +8,12 @@
 
     <ScrollView
         android:id="@+id/chatScrollView"
-        android:layout_width="374dp"
-        android:layout_height="452dp"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
         android:layout_marginBottom="4dp"
         android:layout_marginEnd="4dp"
         android:layout_marginStart="4dp"
-        android:layout_marginTop="4dp"
+        android:layout_marginTop="8dp"
         android:foregroundGravity="bottom"
         app:layout_constraintBottom_toTopOf="@+id/chatBox"
         app:layout_constraintEnd_toEndOf="parent"
@@ -24,9 +24,8 @@
             android:id="@+id/chatContainer"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_gravity="bottom"
-            android:gravity="bottom"
-            android:orientation="vertical"></LinearLayout>
+            android:layout_gravity="top|center_vertical"
+            android:orientation="vertical" />
     </ScrollView>
 
     <EditText
@@ -36,8 +35,8 @@
         android:layout_marginBottom="8dp"
         android:layout_marginStart="8dp"
         android:ems="10"
-        android:hint="Type a message..."
-        android:inputType="textPersonName"
+        android:hint="@string/chat_box_hint"
+        android:inputType="textLongMessage"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toStartOf="@+id/sendButton"
         app:layout_constraintStart_toStartOf="parent"
@@ -52,6 +51,8 @@
         android:scaleType="fitXY"
         android:src="@drawable/ic_send_black_24dp"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent" />
+        app:layout_constraintEnd_toEndOf="parent"
+        android:layout_marginRight="8dp"
+        android:contentDescription="@string/send_button_content_description" />
 
 </android.support.constraint.ConstraintLayout>

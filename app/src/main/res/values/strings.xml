@@ -1,3 +1,5 @@
 <resources>
     <string name="app_name">NodeBoy</string>
+    <string name="chat_box_hint">Type a message...</string>
+    <string name="send_button_content_description">Send Button</string>
 </resources>
