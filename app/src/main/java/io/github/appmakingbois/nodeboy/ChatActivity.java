@@ -17,16 +17,22 @@ public class ChatActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_chat);
+        EditText chatBox = findViewById(R.id.chatBox);
+
         findViewById(R.id.sendButton).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                String message = ((EditText)findViewById(R.id.chatBox)).getText().toString().trim();
-                if(!message.isEmpty()){
-                    insertOutgoingMessage("ur mum",message);
-                    ((EditText)findViewById(R.id.chatBox)).setText("");
-                }
+                sendMessage();
             }
         });
+    }
+
+    private void sendMessage(){
+        String message = ((EditText)findViewById(R.id.chatBox)).getText().toString().trim();
+        if(!message.isEmpty()){
+            insertOutgoingMessage("TODO implement some real name system",message);
+            ((EditText)findViewById(R.id.chatBox)).setText("");
+        }
     }
 
     private void scrollDown(final ScrollView scrollLayout){
@@ -42,7 +48,8 @@ public class ChatActivity extends AppCompatActivity {
 
     private void insertOutgoingMessage(String senderID, String messageBody){
         LayoutInflater inflater = getLayoutInflater();
-        LinearLayout messageView = (LinearLayout) inflater.inflate(R.layout.message_outgoing,null);
+        LinearLayout container = findViewById(R.id.chatContainer);
+        LinearLayout messageView = (LinearLayout) inflater.inflate(R.layout.message_outgoing,container);
         TextView senderNameDisplay = messageView.findViewById(R.id.senderName);
         senderNameDisplay.setText(senderID);
         TextView messageBodyDisplay = messageView.findViewById(R.id.messageBody);
@@ -50,7 +57,6 @@ public class ChatActivity extends AppCompatActivity {
         TextView recievedTimeDisplay = messageView.findViewById(R.id.receivedTime);
         Date time = new Date();
         recievedTimeDisplay.setText(time.getHours()+":"+time.getMinutes());
-        LinearLayout container = findViewById(R.id.chatContainer);
         container.addView(messageView);
         ScrollView chatScrollView = findViewById(R.id.chatScrollView);
         scrollDown(chatScrollView);
