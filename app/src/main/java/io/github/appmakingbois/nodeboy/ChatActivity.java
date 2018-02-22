@@ -1,5 +1,8 @@
 package io.github.appmakingbois.nodeboy;
 
+import android.content.Intent;
+import android.content.IntentFilter;
+import android.net.wifi.p2p.WifiP2pManager;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.view.LayoutInflater;
@@ -8,8 +11,12 @@ import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.ScrollView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import java.util.Date;
+
+import io.github.appmakingbois.nodeboy.net.NetService;
+import io.github.appmakingbois.nodeboy.net.WifiP2PBroadcastReceiver;
 
 public class ChatActivity extends AppCompatActivity {
 
@@ -19,6 +26,10 @@ public class ChatActivity extends AppCompatActivity {
         setContentView(R.layout.activity_chat);
         EditText chatBox = findViewById(R.id.chatBox);
 
+        Intent serviceIntent = new Intent(this, NetService.class);
+        serviceIntent.setAction(NetService.START_ACTION);
+        startService(serviceIntent);
+
         findViewById(R.id.sendButton).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -26,6 +37,8 @@ public class ChatActivity extends AppCompatActivity {
             }
         });
     }
+
+
 
     private void sendMessage(){
         String message = ((EditText)findViewById(R.id.chatBox)).getText().toString().trim();
@@ -49,7 +62,7 @@ public class ChatActivity extends AppCompatActivity {
     private void insertOutgoingMessage(String senderID, String messageBody){
         LayoutInflater inflater = getLayoutInflater();
         LinearLayout container = findViewById(R.id.chatContainer);
-        LinearLayout messageView = (LinearLayout) inflater.inflate(R.layout.message_outgoing,container);
+        LinearLayout messageView = (LinearLayout) inflater.inflate(R.layout.message_outgoing,null);
         TextView senderNameDisplay = messageView.findViewById(R.id.senderName);
         senderNameDisplay.setText(senderID);
         TextView messageBodyDisplay = messageView.findViewById(R.id.messageBody);
