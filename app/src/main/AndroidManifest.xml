@@ -15,14 +15,14 @@
         android:theme="@style/AppTheme">
         <service android:name=".net.NetService">
             <intent-filter>
-                <action android:name="io.github.appmakingbois.nodeboy.action.start_action"/>
-                <action android:name="io.github.appmakingbois.nodeboy.action.stop_action"/>
+                <action android:name="@string/action_start"/>
+                <action android:name="@string/action_stop"/>
+                <action android:name="@string/action_update_notification"/>
             </intent-filter>
         </service>
         <activity android:name=".MainActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
-
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>

@@ -2,4 +2,10 @@
     <string name="app_name">NodeBoy</string>
     <string name="chat_box_hint">Type a message...</string>
     <string name="send_button_content_description">Send Button</string>
+
+    <!-- Intent actions -->
+    <string name="action_start">io.github.appmakingbois.nodeboy.action.start_action</string>
+    <string name="action_stop">io.github.appmakingbois.nodeboy.action.stop_action</string>
+    <string name="action_request_stop">io.github.appmakingbois.nodeboy.action.request_stop_action</string>
+    <string name="action_update_notification">io.github.appmakingbois.nodeboy.action.update_notification_action</string>
 </resources>
