@@ -67,8 +67,10 @@ public class ConnectionManager {
     }
 
     public synchronized void removeAllConnections(){
-        for(WifiP2pDevice device: connections){
-            removeConnection(device);
+        synchronized (this) {
+            for (WifiP2pDevice device : connections) {
+                removeConnection(device);
+            }
         }
     }
 
