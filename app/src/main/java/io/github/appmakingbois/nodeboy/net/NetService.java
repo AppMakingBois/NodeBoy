@@ -11,17 +11,20 @@ import android.content.IntentFilter;
 import android.graphics.Color;
 import android.graphics.drawable.Drawable;
 import android.net.wifi.p2p.WifiP2pManager;
+import android.os.Binder;
 import android.os.Build;
 import android.os.IBinder;
 import android.support.annotation.Nullable;
 import android.support.annotation.RequiresApi;
 import android.support.v4.app.NotificationCompat;
-import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
 import android.widget.Toast;
 
+import java.util.concurrent.ConcurrentLinkedQueue;
+
 import io.github.appmakingbois.nodeboy.ChatActivity;
 import io.github.appmakingbois.nodeboy.R;
+import io.github.appmakingbois.nodeboy.protocol.Packet;
 
 
 public class NetService extends Service {
@@ -35,10 +38,14 @@ public class NetService extends Service {
 
     private ConnectionManager connectionManager;
 
+    private ConcurrentLinkedQueue<Packet> outgoingPackets;
+
+    private NetServiceBinder binder;
+
     @Nullable
     @Override
     public IBinder onBind(Intent intent) {
-        return null;
+        return binder;
     }
 
     @Override
@@ -48,45 +55,11 @@ public class NetService extends Service {
                 if (!started) {
                     Log.d("service", "starting");
                     startup();
-                    putNotification();
-                    started = true;
                 }
             }
             else if (intent.getAction().equals(getString(R.string.action_stop))) {
                 Log.d("service", "stopping");
-                if (receiver != null) {
-                    unregisterReceiver(receiver);
-                }
-                WifiP2pManager manager = (WifiP2pManager) getSystemService(WIFI_P2P_SERVICE);
-                checkP2PManager(manager);
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
-                    manager.stopPeerDiscovery(channel, new WifiP2pManager.ActionListener() {
-                        @Override
-                        public void onSuccess() {
-                            Log.d("service", "discovery successfully stopped");
-                        }
-
-                        @Override
-                        public void onFailure(int reasonCode) {
-                            Log.w("service", "discovery could not be stopped! " + reasonCode);
-                        }
-                    });
-                }
-                manager.removeGroup(channel, new WifiP2pManager.ActionListener() {
-                    @Override
-                    public void onSuccess() {
-                        Log.d("shutdown", "Group removal successful");
-                    }
-
-                    @Override
-                    public void onFailure(int i) {
-                        Log.e("shutdown", "Group removal not successful! " + i);
-                    }
-                });
-                connectionManager.removeAllConnections();
-                cancelNotification();
-                started = false;
-                stopSelf();
+                shutdown();
             }
         }
         return START_REDELIVER_INTENT;
@@ -94,6 +67,8 @@ public class NetService extends Service {
 
     private void startup() {
         connectionManager = ConnectionManager.getInstance();
+
+        outgoingPackets = new ConcurrentLinkedQueue<>();
 
         IntentFilter filter = new IntentFilter();
         filter.addAction(WifiP2pManager.WIFI_P2P_STATE_CHANGED_ACTION);
@@ -103,7 +78,12 @@ public class NetService extends Service {
 
         WifiP2pManager manager = (WifiP2pManager) getSystemService(WIFI_P2P_SERVICE);
         checkP2PManager(manager);
-        WifiP2pManager.Channel c = manager.initialize(this, getMainLooper(), null);
+        WifiP2pManager.Channel c = manager.initialize(this, getMainLooper(), new WifiP2pManager.ChannelListener() {
+            @Override
+            public void onChannelDisconnected() {
+                //maybe retry connection in here
+            }
+        });
         channel = c;
         receiver = new WifiP2PBroadcastReceiver(manager, c);
 
@@ -123,6 +103,56 @@ public class NetService extends Service {
         };
 
         manager.discoverPeers(c, listener);
+        putNotification();
+        started = true;
+        binder = new NetServiceBinder();
+    }
+
+    private void shutdown() {
+        if (receiver != null) {
+            unregisterReceiver(receiver);
+        }
+        WifiP2pManager manager = (WifiP2pManager) getSystemService(WIFI_P2P_SERVICE);
+        checkP2PManager(manager);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
+            manager.stopPeerDiscovery(channel, new WifiP2pManager.ActionListener() {
+                @Override
+                public void onSuccess() {
+                    Log.d("service", "discovery successfully stopped");
+                }
+
+                @Override
+                public void onFailure(int reasonCode) {
+                    Log.w("service", "discovery could not be stopped! " + reasonCode);
+                }
+            });
+        }
+        manager.cancelConnect(channel, new WifiP2pManager.ActionListener() {
+            @Override
+            public void onSuccess() {
+                Log.d("shutdown", "Current connection successfully canceled");
+            }
+
+            @Override
+            public void onFailure(int i) {
+                Log.e("shutdown", "Current connection couldn't be canceled: " + i);
+            }
+        });
+        manager.removeGroup(channel, new WifiP2pManager.ActionListener() {
+            @Override
+            public void onSuccess() {
+                Log.d("shutdown", "Group removal successful");
+            }
+
+            @Override
+            public void onFailure(int i) {
+                Log.e("shutdown", "Group removal not successful! " + i);
+            }
+        });
+        connectionManager.removeAllConnections();
+        cancelNotification();
+        started = false;
+        stopSelf();
     }
 
     private void checkNotificationManager(NotificationManager manager) {
@@ -143,15 +173,12 @@ public class NetService extends Service {
                 (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
         checkNotificationManager(mNotificationManager);
         // The id of the channel.
-        String id = "nodeboy_notification_channel";
+        String id = getString(R.string.notification_channel_id);
         // The user-visible name of the channel.
-        CharSequence name = "NodeBoy";
-        // The user-visible description of the channel.
-        String description = "Persistent ongoing notification";
-        int importance = NotificationManager.IMPORTANCE_HIGH;
+        CharSequence name = getString(R.string.notification_channel_name);
+        int importance = NotificationManager.IMPORTANCE_MIN;
         NotificationChannel mChannel = new NotificationChannel(id, name, importance);
         // Configure the notification channel.
-        mChannel.setDescription(description);
         mChannel.enableLights(true);
         // Sets the notification light color for notifications posted to this
         // channel, if the device supports this feature.
@@ -159,6 +186,10 @@ public class NetService extends Service {
         mChannel.enableVibration(true);
         mChannel.setVibrationPattern(new long[]{100, 200, 300, 400, 500, 400, 300, 200, 400});
         mNotificationManager.createNotificationChannel(mChannel);
+    }
+
+    public void queuePacket(Packet packet) {
+        outgoingPackets.add(packet);
     }
 
     private void cancelNotification() {
@@ -169,7 +200,7 @@ public class NetService extends Service {
 
     private void putNotification() {
         // The id of the channel.
-        String CHANNEL_ID = "nodeboy_notification_channel";
+        String CHANNEL_ID = getString(R.string.notification_channel_id);
 
         Intent stopIntent = new Intent(this, ChatActivity.class);
         stopIntent.setAction(getString(R.string.action_request_stop));
@@ -219,4 +250,11 @@ public class NetService extends Service {
         }
         mNotificationManager.notify(mNotificationId, mBuilder.build());
     }
+
+    public class NetServiceBinder extends Binder {
+        public NetService getNetService(){
+            return NetService.this;
+        }
+    }
+
 }
