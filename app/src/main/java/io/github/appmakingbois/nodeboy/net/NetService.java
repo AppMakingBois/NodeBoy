@@ -9,7 +9,9 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.graphics.Color;
-import android.graphics.drawable.Drawable;
+import android.net.wifi.p2p.WifiP2pConfig;
+import android.net.wifi.p2p.WifiP2pDevice;
+import android.net.wifi.p2p.WifiP2pInfo;
 import android.net.wifi.p2p.WifiP2pManager;
 import android.os.Binder;
 import android.os.Build;
@@ -20,6 +22,8 @@ import android.support.v4.app.NotificationCompat;
 import android.util.Log;
 import android.widget.Toast;
 
+import java.net.InetAddress;
+import java.util.ArrayList;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 import io.github.appmakingbois.nodeboy.ChatActivity;
@@ -41,6 +45,8 @@ public class NetService extends Service {
     private ConcurrentLinkedQueue<Packet> outgoingPackets;
 
     private NetServiceBinder binder;
+
+    private String myAddress;
 
     @Nullable
     @Override
@@ -76,9 +82,9 @@ public class NetService extends Service {
         filter.addAction(WifiP2pManager.WIFI_P2P_CONNECTION_CHANGED_ACTION);
         filter.addAction(WifiP2pManager.WIFI_P2P_THIS_DEVICE_CHANGED_ACTION);
 
-        WifiP2pManager manager = (WifiP2pManager) getSystemService(WIFI_P2P_SERVICE);
+        final WifiP2pManager manager = (WifiP2pManager) getSystemService(WIFI_P2P_SERVICE);
         checkP2PManager(manager);
-        WifiP2pManager.Channel c = manager.initialize(this, getMainLooper(), new WifiP2pManager.ChannelListener() {
+        final WifiP2pManager.Channel c = manager.initialize(this, getMainLooper(), new WifiP2pManager.ChannelListener() {
             @Override
             public void onChannelDisconnected() {
                 //maybe retry connection in here
@@ -86,6 +92,57 @@ public class NetService extends Service {
         });
         channel = c;
         receiver = new WifiP2PBroadcastReceiver(manager, c);
+        receiver.onConnectionChange(new WifiP2PBroadcastReceiver.ConnectionChangeCallback() {
+            @Override
+            public void onConnect(WifiP2pInfo wifiP2pInfo) {
+                Log.d("connection", wifiP2pInfo.toString());
+                InetAddress address = wifiP2pInfo.groupOwnerAddress;
+                //Socket socket = new Socket(address,4200);
+            }
+
+            @Override
+            public void onDisconnect() {
+                Log.d("connection","Disconnected from a device");
+            }
+        });
+        receiver.onPeerChange(new WifiP2PBroadcastReceiver.PeerChangeCallback() {
+            @Override
+            public void onPeerChange(ArrayList<WifiP2pDevice> deviceList) {
+                for(final WifiP2pDevice device : deviceList){
+                    Log.d("discovery",device.deviceName+" @ "+device.deviceAddress);
+                    WifiP2pConfig cfg = new WifiP2pConfig();
+                    cfg.deviceAddress = device.deviceAddress;
+                    if(ConnectionManager.getInstance().getDeviceByAddress(device.deviceAddress)==null) {
+                        manager.connect(c, cfg, new WifiP2pManager.ActionListener() {
+                            @Override
+                            public void onSuccess() {
+                                Log.d("connection", "successfully connected to "+device.deviceAddress);
+                                connectionManager.addConnection(device);
+                            }
+
+                            @Override
+                            public void onFailure(int reasonCode) {
+                                Log.e("connection", "connection failed! " + reasonCode);
+                            }
+                        });
+                    }
+                    else{
+                        Log.d("connection","we are already connected to "+device.deviceAddress);
+                    }
+                }
+            }
+        });
+        receiver.onP2PStateChange(new WifiP2PBroadcastReceiver.P2PStateChangeCallback() {
+            @Override
+            public void onStateChange(int state) {
+                if (state == WifiP2pManager.WIFI_P2P_STATE_ENABLED) {
+                    // Wifi P2P is enabled
+                } else {
+                    Log.e("net", "WiFi P2P is not enabled!!");
+                }
+                //check if P2P is enabled and notify appropriate activity
+            }
+        });
 
         registerReceiver(receiver, filter);
 
@@ -205,7 +262,6 @@ public class NetService extends Service {
         Intent stopIntent = new Intent(this, ChatActivity.class);
         stopIntent.setAction(getString(R.string.action_request_stop));
         stopIntent.setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
-        Drawable d = getResources().getDrawable(R.drawable.ic_launcher_foreground);
         NotificationCompat.Builder mBuilder =
                 new NotificationCompat.Builder(this, CHANNEL_ID)
                         .setSmallIcon(R.drawable.ic_launcher_foreground)
@@ -256,5 +312,7 @@ public class NetService extends Service {
             return NetService.this;
         }
     }
+
+
 
 }
