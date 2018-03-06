@@ -15,6 +15,7 @@ import android.net.wifi.p2p.WifiP2pInfo;
 import android.net.wifi.p2p.WifiP2pManager;
 import android.os.Binder;
 import android.os.Build;
+import android.os.Handler;
 import android.os.IBinder;
 import android.support.annotation.Nullable;
 import android.support.annotation.RequiresApi;
@@ -47,6 +48,10 @@ public class NetService extends Service {
     private NetServiceBinder binder;
 
     private String myAddress;
+
+    private WifiP2pManager p2pManager;
+
+    private Handler discoveryHandler = new Handler();
 
     @Nullable
     @Override
@@ -84,6 +89,7 @@ public class NetService extends Service {
 
         final WifiP2pManager manager = (WifiP2pManager) getSystemService(WIFI_P2P_SERVICE);
         checkP2PManager(manager);
+        p2pManager = manager;
         final WifiP2pManager.Channel c = manager.initialize(this, getMainLooper(), new WifiP2pManager.ChannelListener() {
             @Override
             public void onChannelDisconnected() {
@@ -143,23 +149,18 @@ public class NetService extends Service {
                 //check if P2P is enabled and notify appropriate activity
             }
         });
+        receiver.onThisDeviceChange(new WifiP2PBroadcastReceiver.ThisDeviceChangeCallback() {
+            @Override
+            public void onThisDeviceChanged(WifiP2pDevice thisDevice) {
+                myAddress = thisDevice.deviceAddress;
+                Log.d("net","My address: "+myAddress);
+            }
+        });
 
         registerReceiver(receiver, filter);
 
-        WifiP2pManager.ActionListener listener = new WifiP2pManager.ActionListener() {
-            @Override
-            public void onSuccess() {
-                Log.d("discovery", "Discovery Initiated");
-            }
+        discover();
 
-            @Override
-            public void onFailure(int reasonCode) {
-                Toast.makeText(getApplicationContext(), "Discovery Failed : " + reasonCode,
-                        Toast.LENGTH_SHORT).show();
-            }
-        };
-
-        manager.discoverPeers(c, listener);
         putNotification();
         started = true;
         binder = new NetServiceBinder();
@@ -210,6 +211,20 @@ public class NetService extends Service {
         cancelNotification();
         started = false;
         stopSelf();
+    }
+
+    private void discover(){
+        p2pManager.discoverPeers(channel, new WifiP2pManager.ActionListener() {
+            @Override
+            public void onSuccess() {
+                Log.d("discovery", "Discovery Initiated");
+            }
+
+            @Override
+            public void onFailure(int reasonCode) {
+                Log.e("discovery","Discovery Failed : " + reasonCode);
+            }
+        });
     }
 
     private void checkNotificationManager(NotificationManager manager) {
