@@ -159,7 +159,7 @@ public class NetService extends Service {
 
         registerReceiver(receiver, filter);
 
-        discover();
+        startDiscovery();
 
         putNotification();
         started = true;
@@ -184,6 +184,7 @@ public class NetService extends Service {
                     Log.w("service", "discovery could not be stopped! " + reasonCode);
                 }
             });
+            stopDiscovery();
         }
         manager.cancelConnect(channel, new WifiP2pManager.ActionListener() {
             @Override
@@ -226,6 +227,26 @@ public class NetService extends Service {
             }
         });
     }
+
+    private void startDiscovery(){
+        discoveryTask.run();
+    }
+
+    private void stopDiscovery(){
+        discoveryHandler.removeCallbacks(discoveryTask);
+    }
+
+    private Runnable discoveryTask = new Runnable() {
+        @Override
+        public void run() {
+            try {
+                discover();
+            }
+            finally {
+                discoveryHandler.postDelayed(discoveryTask,500);
+            }
+        }
+    };
 
     private void checkNotificationManager(NotificationManager manager) {
         if (manager == null) {
