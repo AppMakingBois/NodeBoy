@@ -11,8 +11,10 @@ import android.content.IntentFilter;
 import android.graphics.Color;
 import android.net.wifi.p2p.WifiP2pConfig;
 import android.net.wifi.p2p.WifiP2pDevice;
+import android.net.wifi.p2p.WifiP2pGroup;
 import android.net.wifi.p2p.WifiP2pInfo;
 import android.net.wifi.p2p.WifiP2pManager;
+import android.os.AsyncTask;
 import android.os.Binder;
 import android.os.Build;
 import android.os.Handler;
@@ -23,7 +25,10 @@ import android.support.v4.app.NotificationCompat;
 import android.util.Log;
 import android.widget.Toast;
 
+import java.io.IOException;
 import java.net.InetAddress;
+import java.net.ServerSocket;
+import java.net.Socket;
 import java.util.ArrayList;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
@@ -35,6 +40,9 @@ import io.github.appmakingbois.nodeboy.protocol.Packet;
 public class NetService extends Service {
 
     private int mNotificationId = 42069;
+
+    public static int SERVER_PORT = 4200;
+    public static int CLIENT_PORT = 4201;
 
     private WifiP2PBroadcastReceiver receiver;
     private WifiP2pManager.Channel channel;
@@ -48,6 +56,8 @@ public class NetService extends Service {
     private NetServiceBinder binder;
 
     private String myAddress;
+
+    private ServerSocket serverSocket;
 
     private WifiP2pManager p2pManager;
 
@@ -102,8 +112,21 @@ public class NetService extends Service {
             @Override
             public void onConnect(WifiP2pInfo wifiP2pInfo) {
                 Log.d("connection", wifiP2pInfo.toString());
-                InetAddress address = wifiP2pInfo.groupOwnerAddress;
-                //Socket socket = new Socket(address,4200);
+            }
+
+            @Override
+            public void onGroupInfo(WifiP2pGroup wifiP2pGroup) {
+                Log.d("connection", wifiP2pGroup.toString());
+                if(wifiP2pGroup.isGroupOwner()){
+                    try {
+                        serverSocket = new ServerSocket(4200);
+                        Socket client = serverSocket.accept();
+                        client.getOutputStream();
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                        Log.e("connection","Something went wrong opening a socket!");
+                    }
+                }
             }
 
             @Override
@@ -349,6 +372,15 @@ public class NetService extends Service {
         }
     }
 
+    public class ServerAsyncTask extends AsyncTask<Void,Void,Void>{
 
+        @Override
+        protected Void doInBackground(Void... voids) {
+
+
+
+            return null;
+        }
+    }
 
 }

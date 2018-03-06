@@ -7,6 +7,7 @@ import android.content.Intent;
 import android.net.NetworkInfo;
 import android.net.wifi.p2p.WifiP2pDevice;
 import android.net.wifi.p2p.WifiP2pDeviceList;
+import android.net.wifi.p2p.WifiP2pGroup;
 import android.net.wifi.p2p.WifiP2pInfo;
 import android.net.wifi.p2p.WifiP2pManager;
 import android.net.wifi.p2p.WifiP2pManager.Channel;
@@ -82,6 +83,14 @@ public class WifiP2PBroadcastReceiver extends BroadcastReceiver {
                         }
                     }
                 });
+                mManager.requestGroupInfo(mChannel, new WifiP2pManager.GroupInfoListener() {
+                    @Override
+                    public void onGroupInfoAvailable(WifiP2pGroup wifiP2pGroup) {
+                        if(connectionChangeCallback!=null){
+                            connectionChangeCallback.onGroupInfo(wifiP2pGroup);
+                        }
+                    }
+                });
             } else {
                 if(connectionChangeCallback!=null){
                     connectionChangeCallback.onDisconnect();
@@ -101,6 +110,7 @@ public class WifiP2PBroadcastReceiver extends BroadcastReceiver {
 
     public interface ConnectionChangeCallback {
         public void onConnect(WifiP2pInfo wifiP2pInfo);
+        public void onGroupInfo(WifiP2pGroup wifiP2pGroup);
         public void onDisconnect();
     }
 
