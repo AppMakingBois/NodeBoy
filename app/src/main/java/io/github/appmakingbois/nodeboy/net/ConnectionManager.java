@@ -27,6 +27,10 @@ public class ConnectionManager {
         }
     }
 
+    public void addConnection(@NonNull Connection connection){
+        connectionMap.put(connection.getDevice().deviceAddress,connection);
+    }
+
     public boolean removeConnection(@NonNull String address) {
         Connection result = getDeviceByAddress(address);
         return result != null && connectionMap.remove(address) != null;
@@ -34,6 +38,10 @@ public class ConnectionManager {
 
     public boolean removeConnection(@NonNull WifiP2pDevice device){
         return removeConnection(device.deviceAddress);
+    }
+
+    public boolean removeConnection(@NonNull Connection connection){
+        return removeConnection(connection.getDevice());
     }
 
     public void removeAllConnections(){
