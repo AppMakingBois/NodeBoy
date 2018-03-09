@@ -25,7 +25,8 @@ public class PacketEncodeTests {
     public void testAnnouncePacket() {
         System.out.print("Testing if encoding/decoding an AnnouncePacket works... ");
         UUID clientID = UUID.randomUUID();
-        AnnouncePacket p = new AnnouncePacket(clientID);
+        String macAddress = "a0:4b:5c:8f:9b:2e";
+        AnnouncePacket p = new AnnouncePacket(clientID,macAddress);
         byte[] encoded = p.serialize();
         AnnouncePacket p2 = new AnnouncePacket(encoded);
 
@@ -33,6 +34,7 @@ public class PacketEncodeTests {
         assertEquals(p2.getPacketID(), Packet.ID.ANNOUNCE);
         assertTrue(p.getClientID().compareTo(p2.getClientID()) == 0);
         assertTrue(p.getPacketUUID().compareTo(p2.getPacketUUID()) == 0);
+        assertEquals(p.getHardwareAddress(),p2.getHardwareAddress());
         assertEquals(p.isRebroadcasted(), p2.isRebroadcasted());
         assertEquals(p.getProtocolVersion(), p2.getProtocolVersion());
         System.out.println("Success");

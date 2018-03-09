@@ -59,6 +59,10 @@ public class NetService extends Service {
 
     private ServerSocket serverSocket;
 
+    private Socket clientSocket;
+
+    private boolean isServer = false;
+
     private WifiP2pManager p2pManager;
 
     private Handler discoveryHandler = new Handler();
@@ -118,6 +122,7 @@ public class NetService extends Service {
             public void onGroupInfo(WifiP2pGroup wifiP2pGroup) {
                 Log.d("connection", wifiP2pGroup.toString());
                 if(wifiP2pGroup.isGroupOwner()){
+                    isServer = true;
                     try {
                         serverSocket = new ServerSocket(4200);
                         Socket client = serverSocket.accept();
@@ -126,6 +131,9 @@ public class NetService extends Service {
                         e.printStackTrace();
                         Log.e("connection","Something went wrong opening a socket!");
                     }
+                }
+                else{
+                    isServer = false;
                 }
             }
 
