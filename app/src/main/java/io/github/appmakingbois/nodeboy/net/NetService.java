@@ -380,15 +380,6 @@ public class NetService extends Service {
         }
     }
 
-    public class ServerAsyncTask extends AsyncTask<Void,Void,Void>{
 
-        @Override
-        protected Void doInBackground(Void... voids) {
-
-
-
-            return null;
-        }
-    }
 
 }
