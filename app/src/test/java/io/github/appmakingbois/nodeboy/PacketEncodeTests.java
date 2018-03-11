@@ -165,4 +165,26 @@ public class PacketEncodeTests {
         assertEquals(p.isRebroadcasted(),p2.isRebroadcasted());
         System.out.println("Success");
     }
+
+    @Test
+    public void testAutoDecode(){
+        System.out.print("Testing if auto decode works... ");
+        UUID clientID = UUID.randomUUID();
+        Random r = new Random();
+        byte[] data = new byte[18];
+        r.nextBytes(data);
+        boolean rebroadcasted = r.nextBoolean();
+        DataPayloadPacket p = new DataPayloadPacket(rebroadcasted,clientID,data);
+
+        byte[] encoded = p.serialize();
+        DataPayloadPacket p2 = (DataPayloadPacket) Packet.autoDecode(encoded);
+        assertEquals(p.getPacketID(), Packet.ID.DATA_PAYLOAD);
+        assertEquals(p2.getPacketID(), Packet.ID.DATA_PAYLOAD);
+        assertTrue(p.getClientID().compareTo(p2.getClientID())==0);
+        assertTrue(p.getPacketUUID().compareTo(p2.getPacketUUID())==0);
+        assertEquals(p.isRebroadcasted(), p2.isRebroadcasted());
+        assertArrayEquals(data,p.getData());
+        assertArrayEquals(data,p2.getData());
+        System.out.println("Success");
+    }
 }

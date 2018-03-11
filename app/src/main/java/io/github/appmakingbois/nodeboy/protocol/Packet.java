@@ -1,7 +1,16 @@
 package io.github.appmakingbois.nodeboy.protocol;
 
-import java.util.ArrayList;
+import android.support.annotation.Nullable;
+
 import java.util.UUID;
+
+import io.github.appmakingbois.nodeboy.protocol.packets.AnnouncePacket;
+import io.github.appmakingbois.nodeboy.protocol.packets.ConnectionListPacket;
+import io.github.appmakingbois.nodeboy.protocol.packets.DataPayloadPacket;
+import io.github.appmakingbois.nodeboy.protocol.packets.DisconnectPacket;
+import io.github.appmakingbois.nodeboy.protocol.packets.KeepAlivePacket;
+import io.github.appmakingbois.nodeboy.protocol.packets.RequestClientInfoPacket;
+import io.github.appmakingbois.nodeboy.protocol.packets.RequestConnectionListPacket;
 
 public abstract class Packet {
     /**
@@ -43,7 +52,7 @@ public abstract class Packet {
         return this.clientID;
     }
 
-    public Packet(boolean rebroadcasted, UUID clientID) {
+    protected Packet(boolean rebroadcasted, UUID clientID) {
         this.rebroadcasted = rebroadcasted;
         this.packetUUID = UUID.randomUUID();
         if (clientID == null) {
@@ -51,10 +60,10 @@ public abstract class Packet {
         }
         this.clientID = clientID;
     }
-    public Packet(UUID clientID){
+    protected Packet(UUID clientID){
         this(false,clientID);
     }
-    public Packet(byte[] encodedData){
+    protected Packet(byte[] encodedData){
         PacketDecoder decoder = new PacketDecoder(encodedData);
         int packetID = decoder.getInt();
         if(packetID!=getPacketID()){
@@ -67,6 +76,35 @@ public abstract class Packet {
         this.packetUUID = packetUUID;
         this.rebroadcasted = rebroadcasted;
         this.clientID = clientID;
+    }
+
+    @Nullable
+    public static Packet autoDecode(byte[] data){
+        try {
+            PacketDecoder decoder = new PacketDecoder(data);
+            int packetID = decoder.getInt();
+            switch (packetID) {
+                case ID.ANNOUNCE:
+                    return new AnnouncePacket(data);
+                case ID.REQUEST_CLIENT_INFO:
+                    return new RequestClientInfoPacket(data);
+                case ID.KEEP_ALIVE:
+                    return new KeepAlivePacket(data);
+                case ID.CONNECTION_LIST:
+                    return new ConnectionListPacket(data);
+                case ID.REQUEST_CONNECTION_LIST:
+                    return new RequestConnectionListPacket(data);
+                case ID.DATA_PAYLOAD:
+                    return new DataPayloadPacket(data);
+                case ID.DISCONNECT:
+                    return new DisconnectPacket(data);
+                default:
+                    return null;
+            }
+        }catch(RuntimeException e){
+            e.printStackTrace();
+            return null;
+        }
     }
 
     /**
@@ -104,30 +142,30 @@ public abstract class Packet {
         /**
          * The ID of the Announce packet
          */
-        public static byte ANNOUNCE = 0x01;
+        public static final byte ANNOUNCE = 0x01;
         /**
          * The ID of the Request Client Info packet
          */
-        public static byte REQUEST_CLIENT_INFO = 0x02;
+        public static final byte REQUEST_CLIENT_INFO = 0x02;
         /**
          * The ID of the Keep-Alive packet
          */
-        public static byte KEEP_ALIVE = 0x03;
+        public static final byte KEEP_ALIVE = 0x03;
         /**
          * The ID of the Keep-Alive packet
          */
-        public static byte CONNECTION_LIST = 0x04;
+        public static final byte CONNECTION_LIST = 0x04;
         /**
          * The ID of the Keep-Alive packet
          */
-        public static byte REQUEST_CONNECTION_LIST = 0x05;
+        public static final byte REQUEST_CONNECTION_LIST = 0x05;
         /**
          * The ID of the Keep-Alive packet
          */
-        public static byte DATA_PAYLOAD = 0x06;
+        public static final byte DATA_PAYLOAD = 0x06;
         /**
          * The ID of the Keep-Alive packet
          */
-        public static byte DISCONNECT = 0x7F;
+        public static final byte DISCONNECT = 0x7F;
     }
 }
