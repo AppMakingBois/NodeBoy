@@ -1,4 +1,4 @@
-package io.github.appmakingbois.nodeboy;
+package io.github.appmakingbois.nodeboy.fragment;
 
 import android.content.Context;
 import android.content.IntentFilter;
@@ -13,6 +13,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
+import io.github.appmakingbois.nodeboy.R;
 import io.github.appmakingbois.nodeboy.net.WifiP2PBroadcastReceiver;
 
 

@@ -1,4 +1,4 @@
-package io.github.appmakingbois.nodeboy;
+package io.github.appmakingbois.nodeboy.fragment;
 
 import android.content.Context;
 import android.content.Intent;
@@ -12,6 +12,9 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+
+import io.github.appmakingbois.nodeboy.MainActivity;
+import io.github.appmakingbois.nodeboy.R;
 
 
 /**
