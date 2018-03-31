@@ -1,6 +1,7 @@
 package io.github.appmakingbois.nodeboy;
 
 import android.content.Context;
+import android.content.IntentFilter;
 import android.net.Uri;
 import android.net.wifi.p2p.WifiP2pManager;
 import android.os.Bundle;
@@ -25,7 +26,7 @@ import io.github.appmakingbois.nodeboy.net.WifiP2PBroadcastReceiver;
  */
 public class P2PCheckFragment extends Fragment {
 
-
+    private WifiP2PBroadcastReceiver receiver;
     private OnFragmentInteractionListener mListener;
 
     public P2PCheckFragment() {
@@ -48,12 +49,14 @@ public class P2PCheckFragment extends Fragment {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
     }
 
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         // Inflate the layout for this fragment
+        checkP2P();
         return inflater.inflate(R.layout.fragment_p2p_check, container, false);
     }
 
@@ -82,6 +85,11 @@ public class P2PCheckFragment extends Fragment {
         mListener = null;
     }
 
+    public void onDestroy() {
+        getActivity().unregisterReceiver(receiver);
+        super.onDestroy();
+    }
+
     /**
      * This interface must be implemented by activities that contain this
      * fragment to allow an interaction in this fragment to be communicated
@@ -103,15 +111,16 @@ public class P2PCheckFragment extends Fragment {
         WifiP2pManager manager = (WifiP2pManager) this.getActivity().getSystemService(Context.WIFI_P2P_SERVICE);
         if(manager == null){
             FragmentManager fm = getActivity().getSupportFragmentManager();
-            fm.beginTransaction().replace(R.id.fragment_container,P2PFailFragment.newInstance(P2PFailFragment.P2P_REASON_UNSUPPORTED)).addToBackStack(null).commit();
+            fm.beginTransaction().replace(R.id.fragment_container,P2PFailFragment.newInstance(P2PFailFragment.P2P_REASON_UNSUPPORTED)).commit();
         }
         else{
             WifiP2pManager.Channel channel = manager.initialize(getContext(), Looper.getMainLooper(), null);
-            WifiP2PBroadcastReceiver receiver = new WifiP2PBroadcastReceiver(manager, channel);
+            IntentFilter intentFilter = new IntentFilter(WifiP2pManager.WIFI_P2P_STATE_CHANGED_ACTION);
+            receiver = new WifiP2PBroadcastReceiver(manager, channel);
             receiver.onP2PStateChange(state -> {
                 if(state == WifiP2pManager.WIFI_P2P_STATE_DISABLED){
                     FragmentManager fm = getActivity().getSupportFragmentManager();
-                    fm.beginTransaction().replace(R.id.fragment_container,P2PFailFragment.newInstance(P2PFailFragment.P2P_REASON_DISABLED)).addToBackStack(null).commit();
+                    fm.beginTransaction().replace(R.id.fragment_container,P2PFailFragment.newInstance(P2PFailFragment.P2P_REASON_DISABLED)).commit();
                 }
                 else{
                     //success! p2p exists and is enabled.
@@ -119,6 +128,7 @@ public class P2PCheckFragment extends Fragment {
                     //todo add some place to go when this test succeeds
                 }
             });
+            getActivity().registerReceiver(receiver,intentFilter);
         }
     }
 }
