@@ -13,7 +13,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 
-import io.github.appmakingbois.nodeboy.MainActivity;
+import io.github.appmakingbois.nodeboy.activity.MainActivity;
 import io.github.appmakingbois.nodeboy.R;
 
 
@@ -26,13 +26,11 @@ import io.github.appmakingbois.nodeboy.R;
  * create an instance of this fragment.
  */
 public class P2PFailFragment extends Fragment {
-    // TODO: Rename parameter arguments, choose names that match
     // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
     private static final String P2P_FAILURE_REASON = "p2p_fail_reason";
     public static final String P2P_REASON_UNSUPPORTED = "p2p_unsupported";
     public static final String P2P_REASON_DISABLED = "p2p_disabled";
 
-    // TODO: Rename and change types of parameters
     private String p2pFailureReason;
 
     private OnFragmentInteractionListener mListener;
@@ -48,7 +46,6 @@ public class P2PFailFragment extends Fragment {
      * @param p2pFailureReason The reason why initialization of P2P failed.
      * @return A new instance of fragment P2PFailFragment.
      */
-    // TODO: Rename and change types and number of parameters
     public static P2PFailFragment newInstance(String p2pFailureReason) {
         P2PFailFragment fragment = new P2PFailFragment();
         Bundle args = new Bundle();
@@ -111,7 +108,6 @@ public class P2PFailFragment extends Fragment {
         return v;
     }
 
-    // TODO: Rename method, update argument and hook method into UI event
     public void onButtonPressed(Uri uri) {
         if (mListener != null) {
             mListener.onFragmentInteraction(uri);
@@ -149,7 +145,6 @@ public class P2PFailFragment extends Fragment {
      * >Communicating with Other Fragments</a> for more information.
      */
     public interface OnFragmentInteractionListener {
-        // TODO: Update argument type and name
         void onFragmentInteraction(Uri uri);
     }
 }

@@ -20,13 +20,13 @@
                 <action android:name="@string/action_update_notification"/>
             </intent-filter>
         </service>
-        <activity android:name=".MainActivity">
+        <activity android:name=".activity.MainActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity android:name=".ChatActivity" />
+        <activity android:name=".activity.ChatActivity" />
     </application>
 
 </manifest>

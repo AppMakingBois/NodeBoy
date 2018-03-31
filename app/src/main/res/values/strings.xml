@@ -11,4 +11,11 @@
 
     <string name="notification_channel_id">nodeboy_notification_channel</string>
     <string name="notification_channel_name">NodeBoy</string>
+
+    <!-- TODO: Remove or change this placeholder text -->
+    <string name="hello_blank_fragment">Hello blank fragment</string>
+    <string name="checking_p2p">Checking to see if your device can use WiFi Peer-To-Peer...</string>
+    <string name="warning_p2p_not_enabled">WiFi P2P is not enabled! Please press the button to open settings and enable it.</string>
+    <string name="open_settings">Open Settings</string>
+    <string name="error_p2p_not_supported">Unfortunately, WiFi P2P does not seem to be supported on your device. This application depends on WiFi P2P to perform its primary function, so you will not be able to use this app. We apologize for the inconvenience.</string>
 </resources>

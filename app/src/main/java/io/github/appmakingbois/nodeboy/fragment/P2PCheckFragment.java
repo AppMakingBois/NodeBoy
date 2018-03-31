@@ -39,7 +39,6 @@ public class P2PCheckFragment extends Fragment {
      * this fragment using the provided parameters.
      * @return A new instance of fragment P2PCheckFragment.
      */
-    // TODO: Rename and change types and number of parameters
     public static P2PCheckFragment newInstance() {
         P2PCheckFragment fragment = new P2PCheckFragment();
         Bundle args = new Bundle();
@@ -61,7 +60,6 @@ public class P2PCheckFragment extends Fragment {
         return inflater.inflate(R.layout.fragment_p2p_check, container, false);
     }
 
-    // TODO: Rename method, update argument and hook method into UI event
     public void onButtonPressed(Uri uri) {
         if (mListener != null) {
             mListener.onFragmentInteraction(uri);
@@ -102,7 +100,6 @@ public class P2PCheckFragment extends Fragment {
      * >Communicating with Other Fragments</a> for more information.
      */
     public interface OnFragmentInteractionListener {
-        // TODO: Update argument type and name
         void onFragmentInteraction(Uri uri);
     }
 

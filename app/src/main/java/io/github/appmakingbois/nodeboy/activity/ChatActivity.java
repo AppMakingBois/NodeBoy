@@ -1,13 +1,12 @@
-package io.github.appmakingbois.nodeboy;
+package io.github.appmakingbois.nodeboy.activity;
 
-import android.content.BroadcastReceiver;
-import android.content.Context;
+import android.content.ComponentName;
 import android.content.DialogInterface;
 import android.content.Intent;
-import android.content.IntentFilter;
+import android.content.ServiceConnection;
 import android.net.wifi.p2p.WifiP2pManager;
 import android.os.Bundle;
-import android.support.annotation.NonNull;
+import android.os.IBinder;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.view.LayoutInflater;
@@ -19,13 +18,37 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import java.util.Date;
+import java.util.UUID;
 
+import io.github.appmakingbois.nodeboy.R;
 import io.github.appmakingbois.nodeboy.net.NetService;
-import io.github.appmakingbois.nodeboy.net.WifiP2PBroadcastReceiver;
 
-public class ChatActivity extends AppCompatActivity {
+public class ChatActivity extends AppCompatActivity{
 
     //private ShutdownBroadcastReceiver receiver;
+
+    private boolean boundToNetService = false;
+    private NetService netService = null;
+    private UUID clientID = UUID.randomUUID();
+    private ServiceConnection netServiceConnection = new ServiceConnection() {
+        @Override
+        public void onServiceConnected(ComponentName componentName, IBinder iBinder) {
+            boundToNetService = true;
+            NetService.NetServiceBinder binder = (NetService.NetServiceBinder) iBinder;
+            netService = binder.getNetService();
+            netService.setMessageListener(new NetService.MessageListener() {
+                @Override
+                public void onMessage(String message) {
+                    insertIncomingMessage("yeet",message);
+                }
+            });
+        }
+
+        @Override
+        public void onServiceDisconnected(ComponentName componentName) {
+            boundToNetService = false;
+        }
+    };
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -66,6 +89,7 @@ public class ChatActivity extends AppCompatActivity {
                     sendMessage();
                 }
             });
+
         }
     }
 
@@ -130,9 +154,15 @@ public class ChatActivity extends AppCompatActivity {
 
     private void sendMessage(){
         String message = ((EditText)findViewById(R.id.chatBox)).getText().toString().trim();
-        if(!message.isEmpty()){
-            insertOutgoingMessage("TODO implement some real name system",message);
-            ((EditText)findViewById(R.id.chatBox)).setText("");
+        if(boundToNetService){
+            if(!message.isEmpty()){
+            netService.sendMessage(message);
+                insertOutgoingMessage("TODO implement some real name system",message);
+                ((EditText)findViewById(R.id.chatBox)).setText("");
+            }
+        }
+        else{
+            Toast.makeText(this,"Not bound to service!!",Toast.LENGTH_SHORT).show();
         }
     }
 
@@ -151,6 +181,21 @@ public class ChatActivity extends AppCompatActivity {
         LayoutInflater inflater = getLayoutInflater();
         LinearLayout container = findViewById(R.id.chatContainer);
         LinearLayout messageView = (LinearLayout) inflater.inflate(R.layout.message_outgoing,null);
+        TextView senderNameDisplay = messageView.findViewById(R.id.senderName);
+        senderNameDisplay.setText(senderID);
+        TextView messageBodyDisplay = messageView.findViewById(R.id.messageBody);
+        messageBodyDisplay.setText(messageBody);
+        TextView recievedTimeDisplay = messageView.findViewById(R.id.receivedTime);
+        Date time = new Date();
+        recievedTimeDisplay.setText(time.getHours()+":"+time.getMinutes());
+        container.addView(messageView);
+        ScrollView chatScrollView = findViewById(R.id.chatScrollView);
+        scrollDown(chatScrollView);
+    }
+    private void insertIncomingMessage(String senderID, String messageBody){
+        LayoutInflater inflater = getLayoutInflater();
+        LinearLayout container = findViewById(R.id.chatContainer);
+        LinearLayout messageView = (LinearLayout) inflater.inflate(R.layout.message_incoming,null);
         TextView senderNameDisplay = messageView.findViewById(R.id.senderName);
         senderNameDisplay.setText(senderID);
         TextView messageBodyDisplay = messageView.findViewById(R.id.messageBody);
