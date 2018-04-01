@@ -11,7 +11,6 @@ import android.net.wifi.p2p.WifiP2pGroup;
 import android.net.wifi.p2p.WifiP2pInfo;
 import android.net.wifi.p2p.WifiP2pManager;
 import android.net.wifi.p2p.WifiP2pManager.Channel;
-import android.util.Log;
 
 import java.util.ArrayList;
 
@@ -95,8 +94,6 @@ public class WifiP2PBroadcastReceiver extends BroadcastReceiver {
                 if(connectionChangeCallback!=null){
                     connectionChangeCallback.onDisconnect();
                 }
-                //disconnection
-                Log.d("connection", "device disconnected");
             }
 
         } else if (WifiP2pManager.WIFI_P2P_THIS_DEVICE_CHANGED_ACTION.equals(action)) {
