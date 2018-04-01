@@ -8,12 +8,12 @@ import android.os.Bundle;
 import android.os.Looper;
 import android.support.annotation.NonNull;
 import android.support.v4.app.Fragment;
-import android.support.v4.app.FragmentManager;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
 import io.github.appmakingbois.nodeboy.R;
+import io.github.appmakingbois.nodeboy.activity.MainActivity;
 import io.github.appmakingbois.nodeboy.net.WifiP2PBroadcastReceiver;
 
 
@@ -26,6 +26,10 @@ import io.github.appmakingbois.nodeboy.net.WifiP2PBroadcastReceiver;
  * create an instance of this fragment.
  */
 public class P2PCheckFragment extends Fragment {
+
+    public static final int TITLE = R.string.p2p_check_title;
+    public static final int MENU = R.menu.menu_p2p_check;
+
 
     private WifiP2PBroadcastReceiver receiver;
     private OnFragmentInteractionListener mListener;
@@ -104,29 +108,28 @@ public class P2PCheckFragment extends Fragment {
     }
 
 
-    private void checkP2P(){
-        //first test: see if we can obtain a service. If we can't, then start fail fragment with "p2p not supported" error
-        WifiP2pManager manager = (WifiP2pManager) this.getActivity().getSystemService(Context.WIFI_P2P_SERVICE);
-        if(manager == null){
-            FragmentManager fm = getActivity().getSupportFragmentManager();
-            fm.beginTransaction().replace(R.id.fragment_container,P2PFailFragment.newInstance(P2PFailFragment.P2P_REASON_UNSUPPORTED)).commit();
-        }
-        else{
-            WifiP2pManager.Channel channel = manager.initialize(getContext(), Looper.getMainLooper(), null);
-            IntentFilter intentFilter = new IntentFilter(WifiP2pManager.WIFI_P2P_STATE_CHANGED_ACTION);
-            receiver = new WifiP2PBroadcastReceiver(manager, channel);
-            receiver.onP2PStateChange(state -> {
-                if(state == WifiP2pManager.WIFI_P2P_STATE_DISABLED){
-                    FragmentManager fm = getActivity().getSupportFragmentManager();
-                    fm.beginTransaction().replace(R.id.fragment_container,P2PFailFragment.newInstance(P2PFailFragment.P2P_REASON_DISABLED)).commit();
-                }
-                else{
-                    //success! p2p exists and is enabled.
-                    FragmentManager fm = getActivity().getSupportFragmentManager();
-                    //todo add some place to go when this test succeeds
-                }
-            });
-            getActivity().registerReceiver(receiver,intentFilter);
+    private void checkP2P() {
+        if (getActivity() != null && getActivity() instanceof MainActivity) {
+            MainActivity activity = (MainActivity) getActivity();
+            //first test: see if we can obtain a service. If we can't, then start fail fragment with "p2p not supported" error
+            WifiP2pManager manager = (WifiP2pManager) activity.getSystemService(Context.WIFI_P2P_SERVICE);
+            if (manager == null) {
+                activity.displayFragment(P2PFailFragment.newInstance(P2PFailFragment.P2P_REASON_UNSUPPORTED));
+            }
+            else {
+                WifiP2pManager.Channel channel = manager.initialize(getContext(), Looper.getMainLooper(), null);
+                IntentFilter intentFilter = new IntentFilter(WifiP2pManager.WIFI_P2P_STATE_CHANGED_ACTION);
+                receiver = new WifiP2PBroadcastReceiver(manager, channel);
+                receiver.onP2PStateChange(state -> {
+                    if (state == WifiP2pManager.WIFI_P2P_STATE_DISABLED) {
+                        activity.displayFragment(P2PFailFragment.newInstance(P2PFailFragment.P2P_REASON_DISABLED));
+                    }
+                    else {
+                        activity.displayFragment(DeviceListFragment.newInstance());
+                    }
+                });
+                getActivity().registerReceiver(receiver, intentFilter);
+            }
         }
     }
 }

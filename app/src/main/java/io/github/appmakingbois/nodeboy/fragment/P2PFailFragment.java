@@ -13,8 +13,8 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 
-import io.github.appmakingbois.nodeboy.activity.MainActivity;
 import io.github.appmakingbois.nodeboy.R;
+import io.github.appmakingbois.nodeboy.activity.MainActivity;
 
 
 /**
@@ -26,6 +26,9 @@ import io.github.appmakingbois.nodeboy.R;
  * create an instance of this fragment.
  */
 public class P2PFailFragment extends Fragment {
+    public static final int TITLE = R.string.p2p_fail_title;
+    public static final int MENU = R.menu.menu_p2p_fail;
+
     // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
     private static final String P2P_FAILURE_REASON = "p2p_fail_reason";
     public static final String P2P_REASON_UNSUPPORTED = "p2p_unsupported";
@@ -105,6 +108,7 @@ public class P2PFailFragment extends Fragment {
             v.findViewById(R.id.p2p_not_enabled_textview).setEnabled(false);
             v.findViewById(R.id.p2p_not_supported_textview).setEnabled(true);
         }
+
         return v;
     }
 

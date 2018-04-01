@@ -18,4 +18,9 @@
     <string name="warning_p2p_not_enabled">WiFi P2P is not enabled! Please press the button to open settings and enable it.</string>
     <string name="open_settings">Open Settings</string>
     <string name="error_p2p_not_supported">Unfortunately, WiFi P2P does not seem to be supported on your device. This application depends on WiFi P2P to perform its primary function, so you will not be able to use this app. We apologize for the inconvenience.</string>
+    <string name="p2p_fail_title">P2P Failed!</string>
+    <string name="p2p_check_title">Checking P2P...</string>
+    <string name="device_list_title">Devices</string>
+    <string name="device_address_placeholder">Device Address Here</string>
+    <string name="device_name_placeholder">Device Name Here</string>
 </resources>
