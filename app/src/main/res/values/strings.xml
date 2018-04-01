@@ -23,4 +23,8 @@
     <string name="device_list_title">Devices</string>
     <string name="device_address_placeholder">Device Address Here</string>
     <string name="device_name_placeholder">Device Name Here</string>
+    <string name="waiting_for_device_info">Waiting for device info...</string>
+    <string name="this_device">This Device:</string>
+    <string name="item">Item</string>
+    <string name="application_settings">Settings</string>
 </resources>
