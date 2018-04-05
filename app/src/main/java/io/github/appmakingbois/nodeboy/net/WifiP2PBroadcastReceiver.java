@@ -6,7 +6,6 @@ import android.content.Context;
 import android.content.Intent;
 import android.net.NetworkInfo;
 import android.net.wifi.p2p.WifiP2pDevice;
-import android.net.wifi.p2p.WifiP2pDeviceList;
 import android.net.wifi.p2p.WifiP2pGroup;
 import android.net.wifi.p2p.WifiP2pInfo;
 import android.net.wifi.p2p.WifiP2pManager;
@@ -60,13 +59,10 @@ public class WifiP2PBroadcastReceiver extends BroadcastReceiver {
         } else if (WifiP2pManager.WIFI_P2P_PEERS_CHANGED_ACTION.equals(action)) {
             // Call WifiP2pManager.requestPeers() to get a list of current peers
             if (mManager != null) {
-                mManager.requestPeers(mChannel, new WifiP2pManager.PeerListListener() {
-                    @Override
-                    public void onPeersAvailable(WifiP2pDeviceList wifiP2pDeviceList) {
-                        ArrayList<WifiP2pDevice> newDeviceList = new ArrayList<>(wifiP2pDeviceList.getDeviceList());
-                        if(peerChangeCallback!=null){
-                            peerChangeCallback.onPeerChange(newDeviceList);
-                        }
+                mManager.requestPeers(mChannel, wifiP2pDeviceList -> {
+                    ArrayList<WifiP2pDevice> newDeviceList = new ArrayList<>(wifiP2pDeviceList.getDeviceList());
+                    if(peerChangeCallback!=null){
+                        peerChangeCallback.onPeerChange(newDeviceList);
                     }
                 });
             }
@@ -74,20 +70,14 @@ public class WifiP2PBroadcastReceiver extends BroadcastReceiver {
             // Respond to new connection or disconnections
             NetworkInfo networkInfo = intent.getParcelableExtra(WifiP2pManager.EXTRA_NETWORK_INFO);
             if (networkInfo.isConnected()) {
-                mManager.requestConnectionInfo(mChannel, new WifiP2pManager.ConnectionInfoListener() {
-                    @Override
-                    public void onConnectionInfoAvailable(WifiP2pInfo wifiP2pInfo) {
-                        if(connectionChangeCallback!=null){
-                            connectionChangeCallback.onConnect(wifiP2pInfo);
-                        }
+                mManager.requestConnectionInfo(mChannel, wifiP2pInfo -> {
+                    if(connectionChangeCallback!=null){
+                        connectionChangeCallback.onConnect(wifiP2pInfo);
                     }
                 });
-                mManager.requestGroupInfo(mChannel, new WifiP2pManager.GroupInfoListener() {
-                    @Override
-                    public void onGroupInfoAvailable(WifiP2pGroup wifiP2pGroup) {
-                        if(connectionChangeCallback!=null){
-                            connectionChangeCallback.onGroupInfo(wifiP2pGroup);
-                        }
+                mManager.requestGroupInfo(mChannel, wifiP2pGroup -> {
+                    if(connectionChangeCallback!=null){
+                        connectionChangeCallback.onGroupInfo(wifiP2pGroup);
                     }
                 });
             } else {
@@ -106,20 +96,20 @@ public class WifiP2PBroadcastReceiver extends BroadcastReceiver {
     }
 
     public interface ConnectionChangeCallback {
-        public void onConnect(WifiP2pInfo wifiP2pInfo);
-        public void onGroupInfo(WifiP2pGroup wifiP2pGroup);
-        public void onDisconnect();
+        void onConnect(WifiP2pInfo wifiP2pInfo);
+        void onGroupInfo(WifiP2pGroup wifiP2pGroup);
+        void onDisconnect();
     }
 
     public interface PeerChangeCallback {
-        public void onPeerChange(ArrayList<WifiP2pDevice> peers);
+        void onPeerChange(ArrayList<WifiP2pDevice> peers);
     }
 
     public interface ThisDeviceChangeCallback{
-        public void onThisDeviceChanged(WifiP2pDevice thisDevice);
+        void onThisDeviceChanged(WifiP2pDevice thisDevice);
     }
 
     public interface P2PStateChangeCallback{
-        public void onStateChange(int state);
+        void onStateChange(int state);
     }
 }
