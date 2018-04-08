@@ -9,63 +9,58 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.graphics.Color;
-import android.net.wifi.p2p.WifiP2pConfig;
-import android.net.wifi.p2p.WifiP2pDevice;
-import android.net.wifi.p2p.WifiP2pGroup;
 import android.net.wifi.p2p.WifiP2pInfo;
 import android.net.wifi.p2p.WifiP2pManager;
-import android.os.AsyncTask;
 import android.os.Binder;
 import android.os.Build;
-import android.os.Handler;
 import android.os.IBinder;
+import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.annotation.RequiresApi;
 import android.support.v4.app.NotificationCompat;
 import android.util.Log;
-import android.widget.Toast;
+
+import org.java_websocket.handshake.ServerHandshake;
 
 import java.io.IOException;
-import java.net.InetAddress;
-import java.net.ServerSocket;
-import java.net.Socket;
-import java.util.ArrayList;
-import java.util.concurrent.ConcurrentLinkedQueue;
+import java.net.InetSocketAddress;
+import java.net.URI;
+import java.net.URISyntaxException;
 
-import io.github.appmakingbois.nodeboy.ChatActivity;
+import io.github.appmakingbois.nodeboy.activity.ChatActivity;
 import io.github.appmakingbois.nodeboy.R;
-import io.github.appmakingbois.nodeboy.protocol.Packet;
 
 
 public class NetService extends Service {
 
-    private int mNotificationId = 42069;
+    private static final int NOTIFICATION_ID = 42069;
 
-    public static int SERVER_PORT = 4200;
-    public static int CLIENT_PORT = 4201;
+    public static final int SERVER_PORT = 4200;
+
+    private static final int STATE_NOT_RUNNING = -1;
+    private static final int STATE_STARTING_UP = 0;
+    private static final int STATE_SHUTTING_DOWN = 1;
+    private static final int STATE_RUNNING = 2;
+    private static final int STATE_P2P_DISABLED = 3;
+    private int currentState = STATE_NOT_RUNNING;
 
     private WifiP2PBroadcastReceiver receiver;
     private WifiP2pManager.Channel channel;
+    private WifiP2pManager manager;
 
     private boolean started = false;
 
-    private ConnectionManager connectionManager;
-
-    private ConcurrentLinkedQueue<Packet> outgoingPackets;
-
     private NetServiceBinder binder;
 
-    private String myAddress;
-
-    private ServerSocket serverSocket;
-
-    private Socket clientSocket;
+    private String myHardwareAddress;
 
     private boolean isServer = false;
 
-    private WifiP2pManager p2pManager;
+    private NetServiceEventListener netServiceEventListener;
 
-    private Handler discoveryHandler = new Handler();
+    private NodeBoyServer server;
+    private NodeBoyClient client;
+
 
     @Nullable
     @Override
@@ -78,8 +73,15 @@ public class NetService extends Service {
         if (intent.getAction() != null) {
             if (intent.getAction().equals(getString(R.string.action_start))) {
                 if (!started) {
-                    Log.d("service", "starting");
-                    startup();
+                    WifiP2pInfo info = intent.getParcelableExtra(getString(R.string.extra_p2p_connection_info));
+                    if (info != null) {
+                        Log.d("service", "starting");
+                        startup(info);
+                    }
+                    else {
+                        //whoever started this service didn't give us wifi p2p connection info, so let's abort
+                        stopSelf();
+                    }
                 }
             }
             else if (intent.getAction().equals(getString(R.string.action_stop))) {
@@ -90,11 +92,9 @@ public class NetService extends Service {
         return START_REDELIVER_INTENT;
     }
 
-    private void startup() {
-        connectionManager = ConnectionManager.getInstance();
-
-        outgoingPackets = new ConcurrentLinkedQueue<>();
-
+    private void startup(WifiP2pInfo info) {
+        currentState = STATE_STARTING_UP;
+        putNotification(currentState, 0);
         IntentFilter filter = new IntentFilter();
         filter.addAction(WifiP2pManager.WIFI_P2P_STATE_CHANGED_ACTION);
         filter.addAction(WifiP2pManager.WIFI_P2P_PEERS_CHANGED_ACTION);
@@ -103,7 +103,7 @@ public class NetService extends Service {
 
         final WifiP2pManager manager = (WifiP2pManager) getSystemService(WIFI_P2P_SERVICE);
         checkP2PManager(manager);
-        p2pManager = manager;
+        this.manager = manager;
         final WifiP2pManager.Channel c = manager.initialize(this, getMainLooper(), new WifiP2pManager.ChannelListener() {
             @Override
             public void onChannelDisconnected() {
@@ -112,111 +112,55 @@ public class NetService extends Service {
         });
         channel = c;
         receiver = new WifiP2PBroadcastReceiver(manager, c);
-        receiver.onConnectionChange(new WifiP2PBroadcastReceiver.ConnectionChangeCallback() {
-            @Override
-            public void onConnect(WifiP2pInfo wifiP2pInfo) {
-                Log.d("connection", wifiP2pInfo.toString());
-            }
 
-            @Override
-            public void onGroupInfo(WifiP2pGroup wifiP2pGroup) {
-                Log.d("connection", wifiP2pGroup.toString());
-                if(wifiP2pGroup.isGroupOwner()){
-                    isServer = true;
-                    try {
-                        serverSocket = new ServerSocket(4200);
-                        Socket client = serverSocket.accept();
-                        client.getOutputStream();
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                        Log.e("connection","Something went wrong opening a socket!");
-                    }
+        receiver.onP2PStateChange(state -> {
+            if (state == WifiP2pManager.WIFI_P2P_STATE_DISABLED) {
+                Log.e("net", "WiFi P2P is not enabled!!");
+                this.currentState = STATE_P2P_DISABLED;
+                putNotification(currentState, 0);
+                if (netServiceEventListener != null) {
+                    netServiceEventListener.onShutdown(NetServiceEventListener.SHUTDOWN_P2P_DISABLED);
                 }
-                else{
-                    isServer = false;
-                }
-            }
-
-            @Override
-            public void onDisconnect() {
-                Log.d("connection","Disconnected from a device");
+                //if P2P gets disabled, that means that everyone will be disconnected anyway. we should shut down the service.
+                shutdown();
             }
         });
-        receiver.onPeerChange(new WifiP2PBroadcastReceiver.PeerChangeCallback() {
-            @Override
-            public void onPeerChange(ArrayList<WifiP2pDevice> deviceList) {
-                for(final WifiP2pDevice device : deviceList){
-                    Log.d("discovery",device.deviceName+" @ "+device.deviceAddress);
-                    WifiP2pConfig cfg = new WifiP2pConfig();
-                    cfg.deviceAddress = device.deviceAddress;
-                    if(ConnectionManager.getInstance().getDeviceByAddress(device.deviceAddress)==null) {
-                        manager.connect(c, cfg, new WifiP2pManager.ActionListener() {
-                            @Override
-                            public void onSuccess() {
-                                Log.d("connection", "successfully connected to "+device.deviceAddress);
-                                connectionManager.addConnection(device);
-                            }
 
-                            @Override
-                            public void onFailure(int reasonCode) {
-                                Log.e("connection", "connection failed! " + reasonCode);
-                            }
-                        });
-                    }
-                    else{
-                        Log.d("connection","we are already connected to "+device.deviceAddress);
-                    }
-                }
-            }
-        });
-        receiver.onP2PStateChange(new WifiP2PBroadcastReceiver.P2PStateChangeCallback() {
-            @Override
-            public void onStateChange(int state) {
-                if (state == WifiP2pManager.WIFI_P2P_STATE_ENABLED) {
-                    // Wifi P2P is enabled
-                } else {
-                    Log.e("net", "WiFi P2P is not enabled!!");
-                }
-                //check if P2P is enabled and notify appropriate activity
-            }
-        });
-        receiver.onThisDeviceChange(new WifiP2PBroadcastReceiver.ThisDeviceChangeCallback() {
-            @Override
-            public void onThisDeviceChanged(WifiP2pDevice thisDevice) {
-                myAddress = thisDevice.deviceAddress;
-                Log.d("net","My address: "+myAddress);
-            }
+        receiver.onThisDeviceChange(thisDevice -> {
+            myHardwareAddress = thisDevice.deviceAddress;
+            Log.d("net", "My address: " + myHardwareAddress);
         });
 
         registerReceiver(receiver, filter);
 
-        startDiscovery();
+        isServer = info.isGroupOwner;
+        try {
+            if (isServer) {
+                server = new NodeBoyServer(new InetSocketAddress(SERVER_PORT));
+                client = makeClient(new URI("ws://localhost:" + SERVER_PORT));
+            }
+            else {
+                client = makeClient(new URI("ws://" + info.groupOwnerAddress.getHostAddress() + ":" + SERVER_PORT));
+            }
+        }
+        catch (URISyntaxException e) {
+            e.printStackTrace();
+        }
 
-        putNotification();
+        currentState = STATE_RUNNING;
+        putNotification(currentState, 0);
         started = true;
         binder = new NetServiceBinder();
     }
 
     private void shutdown() {
+        currentState = STATE_SHUTTING_DOWN;
+        putNotification(currentState, 0);
         if (receiver != null) {
             unregisterReceiver(receiver);
         }
         WifiP2pManager manager = (WifiP2pManager) getSystemService(WIFI_P2P_SERVICE);
         checkP2PManager(manager);
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
-            manager.stopPeerDiscovery(channel, new WifiP2pManager.ActionListener() {
-                @Override
-                public void onSuccess() {
-                    Log.d("service", "discovery successfully stopped");
-                }
-
-                @Override
-                public void onFailure(int reasonCode) {
-                    Log.w("service", "discovery could not be stopped! " + reasonCode);
-                }
-            });
-            stopDiscovery();
-        }
         manager.cancelConnect(channel, new WifiP2pManager.ActionListener() {
             @Override
             public void onSuccess() {
@@ -239,45 +183,50 @@ public class NetService extends Service {
                 Log.e("shutdown", "Group removal not successful! " + i);
             }
         });
-        connectionManager.removeAllConnections();
         cancelNotification();
-        started = false;
-        stopSelf();
-    }
-
-    private void discover(){
-        p2pManager.discoverPeers(channel, new WifiP2pManager.ActionListener() {
-            @Override
-            public void onSuccess() {
-                Log.d("discovery", "Discovery Initiated");
+        try {
+            if(server!=null) {
+                server.stop();
             }
-
-            @Override
-            public void onFailure(int reasonCode) {
-                Log.e("discovery","Discovery Failed : " + reasonCode);
-            }
-        });
-    }
-
-    private void startDiscovery(){
-        discoveryTask.run();
-    }
-
-    private void stopDiscovery(){
-        discoveryHandler.removeCallbacks(discoveryTask);
-    }
-
-    private Runnable discoveryTask = new Runnable() {
-        @Override
-        public void run() {
-            try {
-                discover();
-            }
-            finally {
-                discoveryHandler.postDelayed(discoveryTask,500);
-            }
+            client.close();
+            started = false;
         }
-    };
+        catch (IOException e) {
+            e.printStackTrace();
+        }
+        catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        finally {
+            stopSelf();
+        }
+    }
+
+    private NodeBoyClient makeClient(@NonNull URI uri) {
+        return new NodeBoyClient(uri) {
+            @Override
+            public void onOpen(ServerHandshake handshakedata) {
+                //yeet, we are connected
+            }
+
+            @Override
+            public void onMessage(String message) {
+                if (netServiceEventListener != null) {
+                    netServiceEventListener.onMessage(message);
+                }
+            }
+
+            @Override
+            public void onClose(int code, String reason, boolean remote) {
+
+            }
+
+            @Override
+            public void onError(Exception ex) {
+
+            }
+        };
+    }
 
     private void checkNotificationManager(NotificationManager manager) {
         if (manager == null) {
@@ -312,30 +261,29 @@ public class NetService extends Service {
         mNotificationManager.createNotificationChannel(mChannel);
     }
 
-    public void queuePacket(Packet packet) {
-        outgoingPackets.add(packet);
-    }
-
     private void cancelNotification() {
         NotificationManager manager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
         checkNotificationManager(manager);
-        manager.cancel(mNotificationId);
+        manager.cancel(NOTIFICATION_ID);
     }
 
-    private void putNotification() {
+    private void putNotification(int state, int clients) {
         // The id of the channel.
         String CHANNEL_ID = getString(R.string.notification_channel_id);
 
         Intent stopIntent = new Intent(this, ChatActivity.class);
-        stopIntent.setAction(getString(R.string.action_request_stop));
+        stopIntent.putExtra("shutdown_requested", true);
         stopIntent.setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
         NotificationCompat.Builder mBuilder =
                 new NotificationCompat.Builder(this, CHANNEL_ID)
-                        .setSmallIcon(R.drawable.ic_launcher_foreground)
-                        .setContentTitle("Running")
+                        .setSmallIcon(R.drawable.ic_launcher_foreground);
+        switch (state) {
+            case STATE_RUNNING:
+                mBuilder.setContentTitle("Running")
                         .setContentText("Connected to 0 peers")
                         .setOngoing(true)
                         .addAction(R.drawable.ic_launcher_foreground, "Stop", PendingIntent.getActivity(this, 0, stopIntent, PendingIntent.FLAG_ONE_SHOT));
+        }
         // Creates an explicit intent for an Activity in your app
         Intent resultIntent = new Intent(this, ChatActivity.class);
 
@@ -365,21 +313,37 @@ public class NetService extends Service {
                 (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
         checkNotificationManager(mNotificationManager);
 
-        // mNotificationId is a unique integer your app uses to identify the
+        // NOTIFICATION_ID is a unique integer your app uses to identify the
         // notification. For example, to cancel the notification, you can pass its ID
         // number to NotificationManager.cancel().
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             mBuilder.setChannelId(CHANNEL_ID);
         }
-        mNotificationManager.notify(mNotificationId, mBuilder.build());
+        mNotificationManager.notify(NOTIFICATION_ID, mBuilder.build());
+    }
+
+    public interface NetServiceEventListener {
+        void onMessage(String message);
+
+        int SHUTDOWN_P2P_DISABLED = 1;
+        int SHUTDOWN_OTHER_ERROR = 2;
+
+        void onShutdown(int reason);
+    }
+
+    public void setNetServiceEventListener(NetServiceEventListener listener) {
+        this.netServiceEventListener = listener;
+    }
+
+    public void sendMessage(String message) {
+        client.send(message);
     }
 
     public class NetServiceBinder extends Binder {
-        public NetService getNetService(){
+        public NetService getNetService() {
             return NetService.this;
         }
     }
-
 
 
 }

@@ -6,15 +6,22 @@
         android:id="@+id/new_group_button"
         android:enabled="true"
         android:icon="@drawable/ic_group_add"
-        android:title="New Group"
+        android:title="@string/new_group"
         android:visible="true"
-        app:showAsAction="always" />
+        app:showAsAction="ifRoom" />
     <item
         android:id="@+id/refresh_button"
         android:checkable="false"
         android:enabled="true"
         android:icon="@drawable/ic_refresh"
-        android:title="Refresh"
+        android:title="@string/refresh"
         android:visible="true"
         app:showAsAction="always" />
+    <item
+        android:id="@+id/settings_button"
+        android:enabled="true"
+        android:icon="@drawable/ic_settings"
+        android:title="@string/settings"
+        android:visible="true"
+        app:showAsAction="ifRoom"/>
 </menu>

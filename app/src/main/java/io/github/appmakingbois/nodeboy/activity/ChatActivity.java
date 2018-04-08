@@ -10,7 +10,6 @@ import android.os.IBinder;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.view.LayoutInflater;
-import android.view.View;
 import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.ScrollView;
@@ -23,9 +22,7 @@ import java.util.UUID;
 import io.github.appmakingbois.nodeboy.R;
 import io.github.appmakingbois.nodeboy.net.NetService;
 
-public class ChatActivity extends AppCompatActivity{
-
-    //private ShutdownBroadcastReceiver receiver;
+public class ChatActivity extends AppCompatActivity {
 
     private boolean boundToNetService = false;
     private NetService netService = null;
@@ -36,10 +33,15 @@ public class ChatActivity extends AppCompatActivity{
             boundToNetService = true;
             NetService.NetServiceBinder binder = (NetService.NetServiceBinder) iBinder;
             netService = binder.getNetService();
-            netService.setMessageListener(new NetService.MessageListener() {
+            netService.setNetServiceEventListener(new NetService.NetServiceEventListener() {
                 @Override
                 public void onMessage(String message) {
-                    insertIncomingMessage("yeet",message);
+                    insertIncomingMessage("yeet", message);
+                }
+
+                @Override
+                public void onShutdown(int reason) {
+                        returnToMain();
                 }
             });
         }
@@ -56,39 +58,38 @@ public class ChatActivity extends AppCompatActivity{
         setContentView(R.layout.activity_chat);
 
         if(getIntent()!=null){
-            if(getIntent().getAction()!=null && getIntent().getAction().equalsIgnoreCase(getString(R.string.action_request_stop))){
+            if(getIntent().getBooleanExtra("shutdown_requested",false)){
                 shutdownRequest();
             }
         }
         EditText chatBox = findViewById(R.id.chatBox);
 
-        //register();
 
         WifiP2pManager manager = (WifiP2pManager) getSystemService(WIFI_P2P_SERVICE);
         if(manager == null){
-            AlertDialog.Builder builder = new AlertDialog.Builder(this);
-            builder.setTitle("WiFi P2P Not Supported");
-            builder.setMessage("Unfortunately, we could not find a valid WiFi P2P service on your device. This usually means that WiFi P2P is not supported on your device. This application requires WiFi P2P to work, so you will be unable to use this app. We apologize for the inconvenience.");
-            builder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
-                @Override
-                public void onClick(DialogInterface dialogInterface, int i) {
-                    finish();
-                }
-            });
-            builder.show();
+            //p2p is unsupported, so we should just start up the main activity.
+            //from there, the p2p checking will kick in and properly warn the user that p2p is unsupported.
+            returnToMain();
         }
         else {
+            //let's get the connection info and then start the service, passing the connection info to the service.
+            WifiP2pManager.Channel channel = manager.initialize(this,getMainLooper(),null);
+            manager.requestConnectionInfo(channel,connectionInfo -> {
+                if(connectionInfo.groupFormed){
+                    Intent serviceIntent = new Intent(this, NetService.class);
+                    serviceIntent.setAction(getString(R.string.action_start));
+                    serviceIntent.putExtra(getString(R.string.extra_p2p_connection_info),connectionInfo);
+                    startService(serviceIntent);
 
-            Intent serviceIntent = new Intent(this, NetService.class);
-            serviceIntent.setAction(getString(R.string.action_start));
-            startService(serviceIntent);
-
-            findViewById(R.id.sendButton).setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View view) {
-                    sendMessage();
+                    findViewById(R.id.sendButton).setOnClickListener(view -> sendMessage());
+                }
+                else{
+                    //no connection's been made, so this activity shouldn't be running.
+                    //drop back to the main activity.
+                    returnToMain();
                 }
             });
+
 
         }
     }
@@ -101,10 +102,16 @@ public class ChatActivity extends AppCompatActivity{
         }
     }
 
+    private void returnToMain(){
+        Intent mainActivityIntent = new Intent(this, MainActivity.class);
+        startActivity(mainActivityIntent);
+        finish();
+    }
+
     private void shutdownRequest(){
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder.setTitle("Shut Down NodeBoy?");
-        builder.setMessage("This will disconnect you from the network, and will disconnect peers from each other if they were connected indirectly through your device.");
+        builder.setMessage("This will disconnect you from the group, and will disconnect peers from each other if they were connected indirectly through your device.");
         builder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialogInterface, int i) {
@@ -126,31 +133,12 @@ public class ChatActivity extends AppCompatActivity{
         Intent intent = new Intent(this,NetService.class);
         intent.setAction(getString(R.string.action_stop));
         startService(intent);
-        finish();
-    }
-
-    /*public void onPause(){
-        super.onPause();
-        unregisterReceiver(receiver);
-    }
-
-    public void onResume(){
-        super.onResume();
-        register();
+        returnToMain();
     }
 
     public void onDestroy(){
         super.onDestroy();
-        unregisterReceiver(receiver);
     }
-
-    private void register(){
-        if(receiver==null) {
-            receiver = new ShutdownBroadcastReceiver(this);
-        }
-        IntentFilter intentFilter = new IntentFilter(NetService.STOP_ACTION);
-        registerReceiver(receiver,intentFilter);
-    }*/
 
     private void sendMessage(){
         String message = ((EditText)findViewById(R.id.chatBox)).getText().toString().trim();

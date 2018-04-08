@@ -9,22 +9,27 @@
     <string name="action_request_stop">io.github.appmakingbois.nodeboy.action.request_stop_action</string>
     <string name="action_update_notification">io.github.appmakingbois.nodeboy.action.update_notification_action</string>
 
+    <!-- Intent extra data keys -->
+    <string name="extra_p2p_connection_info">extra_p2p_connection_info</string>
+
     <string name="notification_channel_id">nodeboy_notification_channel</string>
     <string name="notification_channel_name">NodeBoy</string>
 
-    <!-- TODO: Remove or change this placeholder text -->
     <string name="hello_blank_fragment">Hello blank fragment</string>
-    <string name="checking_p2p">Checking to see if your device can use WiFi Peer-To-Peer...</string>
+    <string name="checking_p2p">Checking to see if your device can use WiFi Peer-To-Peer…</string>
     <string name="warning_p2p_not_enabled">WiFi P2P is not enabled! Please press the button to open settings and enable it.</string>
     <string name="open_settings">Open Settings</string>
     <string name="error_p2p_not_supported">Unfortunately, WiFi P2P does not seem to be supported on your device. This application depends on WiFi P2P to perform its primary function, so you will not be able to use this app. We apologize for the inconvenience.</string>
     <string name="p2p_fail_title">P2P Failed!</string>
-    <string name="p2p_check_title">Checking P2P...</string>
+    <string name="p2p_check_title">Checking P2P…</string>
     <string name="device_list_title">Devices</string>
     <string name="device_address_placeholder">Device Address Here</string>
     <string name="device_name_placeholder">Device Name Here</string>
-    <string name="waiting_for_device_info">Waiting for device info...</string>
+    <string name="waiting_for_device_info">Waiting for device info…</string>
     <string name="this_device">This Device:</string>
     <string name="item">Item</string>
     <string name="application_settings">Settings</string>
+    <string name="refresh">Refresh</string>
+    <string name="new_group">New Group</string>
+    <string name="settings">Settings</string>
 </resources>

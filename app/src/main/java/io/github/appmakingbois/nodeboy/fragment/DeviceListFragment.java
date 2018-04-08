@@ -2,8 +2,10 @@ package io.github.appmakingbois.nodeboy.fragment;
 
 import android.app.Activity;
 import android.content.Context;
+import android.content.Intent;
 import android.content.IntentFilter;
 import android.net.Uri;
+import android.net.wifi.p2p.WifiP2pConfig;
 import android.net.wifi.p2p.WifiP2pDevice;
 import android.net.wifi.p2p.WifiP2pGroup;
 import android.net.wifi.p2p.WifiP2pInfo;
@@ -17,11 +19,14 @@ import android.view.LayoutInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.LinearLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import java.util.ArrayList;
 
 import io.github.appmakingbois.nodeboy.R;
+import io.github.appmakingbois.nodeboy.activity.ChatActivity;
 import io.github.appmakingbois.nodeboy.activity.MainActivity;
 import io.github.appmakingbois.nodeboy.net.WifiP2PBroadcastReceiver;
 
@@ -33,11 +38,16 @@ import io.github.appmakingbois.nodeboy.net.WifiP2PBroadcastReceiver;
  * Use the {@link DeviceListFragment#newInstance} factory method to
  * create an instance of this fragment.
  */
-@SuppressWarnings("Convert2MethodRef")
+@SuppressWarnings({"Convert2MethodRef", "CodeBlock2Expr"})
 public class DeviceListFragment extends Fragment {
 
     public static final int TITLE = R.string.device_list_title;
     public static final int MENU = R.menu.menu_device_list;
+
+    private int state = NOT_CONNECTED;
+    private static final int NOT_CONNECTED = 0;
+    private static final int CONNECTING = 1;
+    private static final int CONNECTED = 2;
 
     private WifiP2pManager manager;
     private WifiP2pManager.Channel channel;
@@ -68,7 +78,10 @@ public class DeviceListFragment extends Fragment {
     }
 
     public boolean onOptionsItemSelected(MenuItem item){
-
+        if(item.getItemId() == R.id.refresh_button){
+            searchForPeers();
+            return true;
+        }
         return super.onOptionsItemSelected(item);
     }
 
@@ -123,6 +136,8 @@ public class DeviceListFragment extends Fragment {
             });
 
             activity.registerReceiver(receiver,filter);
+
+            searchForPeers();
         }
     }
 
@@ -167,7 +182,56 @@ public class DeviceListFragment extends Fragment {
     }
 
     private void renderPeers(ArrayList<WifiP2pDevice> peers){
+        LinearLayout deviceContainer = activity.findViewById(R.id.device_list_container);
+        deviceContainer.removeAllViews();
+        for(WifiP2pDevice peer : peers){
+            View currentDeviceInfo = activity.getLayoutInflater().inflate(R.layout.device_info,null);
+            ((TextView)currentDeviceInfo.findViewById(R.id.label_device_name)).setText(peer.deviceName);
+            ((TextView)currentDeviceInfo.findViewById(R.id.label_device_address)).setText(peer.deviceAddress);
 
+            currentDeviceInfo.setOnClickListener(view -> {
+                onClickDevice(peer);
+            });
+
+            deviceContainer.addView(currentDeviceInfo);
+        }
+    }
+
+    private void onClickDevice(@NonNull WifiP2pDevice device){
+        Toast.makeText(activity,"You pressed "+device.deviceAddress,Toast.LENGTH_SHORT).show();
+        //todo attempt connecting here
+        if(state==NOT_CONNECTED){
+            //let's attempt to connect
+            WifiP2pConfig cfg = new WifiP2pConfig();
+            cfg.deviceAddress = device.deviceAddress;
+            cfg.groupOwnerIntent = 0;
+            state = CONNECTING;
+            manager.connect(channel, cfg, new WifiP2pManager.ActionListener() {
+                @Override
+                public void onSuccess() {
+                    state = CONNECTED;
+                    Log.d("connect","Connect to device succeeded");
+                    //we should now start up the chat activity
+
+                }
+
+                @Override
+                public void onFailure(int reason) {
+                    state = NOT_CONNECTED;
+                    if(reason==WifiP2pManager.P2P_UNSUPPORTED){
+                        activity.displayFragment(P2PFailFragment.newInstance(P2PFailFragment.P2P_REASON_UNSUPPORTED));
+                        return;
+                    }
+                    Log.e("connect","Connecting to peer failed! Reason: "+reason);
+                }
+            });
+        }
+    }
+
+    private void startChatActivity(){
+        Intent chatActivityIntent = new Intent(activity, ChatActivity.class);
+        activity.startActivity(chatActivityIntent);
+        activity.finish();
     }
 
     private void searchForPeers(){

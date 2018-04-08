@@ -7,7 +7,6 @@ import org.java_websocket.handshake.ClientHandshake;
 import org.java_websocket.server.WebSocketServer;
 
 import java.net.InetSocketAddress;
-import java.util.Arrays;
 
 
 public class NodeBoyServer extends WebSocketServer {
@@ -23,6 +22,7 @@ public class NodeBoyServer extends WebSocketServer {
 
     @Override
     public void onMessage(WebSocket conn, String message) {
+        //when we receive a message, rebroadcast it to all connected clients
         broadcast(message);
         Log.d("server","New message: "+message);
     }
