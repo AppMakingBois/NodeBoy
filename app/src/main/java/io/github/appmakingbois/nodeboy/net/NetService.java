@@ -146,7 +146,10 @@ public class NetService extends Service {
         catch (URISyntaxException e) {
             e.printStackTrace();
         }
-
+        if(isServer){
+            server.start();
+        }
+        client.connect();
         currentState = STATE_RUNNING;
         putNotification(currentState, 0);
         started = true;
@@ -276,13 +279,13 @@ public class NetService extends Service {
         stopIntent.setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
         NotificationCompat.Builder mBuilder =
                 new NotificationCompat.Builder(this, CHANNEL_ID)
-                        .setSmallIcon(R.drawable.ic_launcher_foreground);
+                        .setSmallIcon(R.drawable.ic_service_notification);
         switch (state) {
             case STATE_RUNNING:
                 mBuilder.setContentTitle("Running")
                         .setContentText("Connected to 0 peers")
                         .setOngoing(true)
-                        .addAction(R.drawable.ic_launcher_foreground, "Stop", PendingIntent.getActivity(this, 0, stopIntent, PendingIntent.FLAG_ONE_SHOT));
+                        .addAction(R.drawable.ic_service_notification, "Stop", PendingIntent.getActivity(this, 0, stopIntent, PendingIntent.FLAG_ONE_SHOT));
         }
         // Creates an explicit intent for an Activity in your app
         Intent resultIntent = new Intent(this, ChatActivity.class);

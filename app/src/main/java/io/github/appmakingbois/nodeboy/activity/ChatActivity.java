@@ -80,6 +80,7 @@ public class ChatActivity extends AppCompatActivity {
                     serviceIntent.setAction(getString(R.string.action_start));
                     serviceIntent.putExtra(getString(R.string.extra_p2p_connection_info),connectionInfo);
                     startService(serviceIntent);
+                    bindService(serviceIntent,netServiceConnection,0);
 
                     findViewById(R.id.sendButton).setOnClickListener(view -> sendMessage());
                 }
@@ -173,9 +174,9 @@ public class ChatActivity extends AppCompatActivity {
         senderNameDisplay.setText(senderID);
         TextView messageBodyDisplay = messageView.findViewById(R.id.messageBody);
         messageBodyDisplay.setText(messageBody);
-        TextView recievedTimeDisplay = messageView.findViewById(R.id.receivedTime);
+        TextView receivedTimeDisplay = messageView.findViewById(R.id.receivedTime);
         Date time = new Date();
-        recievedTimeDisplay.setText(time.getHours()+":"+time.getMinutes());
+        receivedTimeDisplay.setText(time.getHours()+":"+time.getMinutes());
         container.addView(messageView);
         ScrollView chatScrollView = findViewById(R.id.chatScrollView);
         scrollDown(chatScrollView);
@@ -188,9 +189,9 @@ public class ChatActivity extends AppCompatActivity {
         senderNameDisplay.setText(senderID);
         TextView messageBodyDisplay = messageView.findViewById(R.id.messageBody);
         messageBodyDisplay.setText(messageBody);
-        TextView recievedTimeDisplay = messageView.findViewById(R.id.receivedTime);
+        TextView receivedTimeDisplay = messageView.findViewById(R.id.receivedTime);
         Date time = new Date();
-        recievedTimeDisplay.setText(time.getHours()+":"+time.getMinutes());
+        receivedTimeDisplay.setText(time.getHours()+":"+time.getMinutes());
         container.addView(messageView);
         ScrollView chatScrollView = findViewById(R.id.chatScrollView);
         scrollDown(chatScrollView);

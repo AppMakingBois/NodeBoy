@@ -117,12 +117,12 @@ public class DeviceListFragment extends Fragment {
             receiver.onConnectionChange(new WifiP2PBroadcastReceiver.ConnectionChangeCallback() {
                 @Override
                 public void onConnect(WifiP2pInfo wifiP2pInfo) {
-
+                    startChatActivity();
                 }
 
                 @Override
                 public void onGroupInfo(WifiP2pGroup wifiP2pGroup) {
-
+                    startChatActivity();
                 }
 
                 @Override
@@ -211,8 +211,6 @@ public class DeviceListFragment extends Fragment {
                 public void onSuccess() {
                     state = CONNECTED;
                     Log.d("connect","Connect to device succeeded");
-                    //we should now start up the chat activity
-
                 }
 
                 @Override
