@@ -24,12 +24,17 @@ import android.util.Log;
 import org.java_websocket.WebSocket;
 import org.java_websocket.handshake.ClientHandshake;
 import org.java_websocket.handshake.ServerHandshake;
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import java.io.IOException;
 import java.net.Inet4Address;
 import java.net.InetSocketAddress;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.ArrayList;
+import java.util.UUID;
+import java.util.concurrent.ConcurrentLinkedQueue;
 
 import io.github.appmakingbois.nodeboy.activity.ChatActivity;
 import io.github.appmakingbois.nodeboy.R;
@@ -57,6 +62,7 @@ public class NetService extends Service {
     private NetServiceBinder binder;
 
     private String myHardwareAddress;
+    private String myDeviceName;
 
     private boolean isServer = false;
 
@@ -65,6 +71,7 @@ public class NetService extends Service {
     private NodeBoyServer server;
     private NodeBoyClient client;
 
+    private ConcurrentLinkedQueue<UUID> messageUUIDs;
 
     @Nullable
     @Override
@@ -97,6 +104,8 @@ public class NetService extends Service {
     }
 
     private void startup(WifiP2pInfo info) {
+        messageUUIDs = new ConcurrentLinkedQueue<>();
+
         currentState = STATE_STARTING_UP;
         putNotification(currentState, 0);
         IntentFilter filter = new IntentFilter();
@@ -132,7 +141,8 @@ public class NetService extends Service {
 
         receiver.onThisDeviceChange(thisDevice -> {
             myHardwareAddress = thisDevice.deviceAddress;
-            Log.d("net", "My address: " + myHardwareAddress);
+            myDeviceName = thisDevice.deviceName;
+            Log.d("net", "My address: " + myHardwareAddress + " My name: "+myDeviceName);
         });
 
         registerReceiver(receiver, filter);
@@ -161,7 +171,6 @@ public class NetService extends Service {
         catch (URISyntaxException e) {
             e.printStackTrace();
         }
-
         //client.connect();
         currentState = STATE_RUNNING;
         putNotification(currentState, 0);
@@ -262,14 +271,24 @@ public class NetService extends Service {
 
             @Override
             public void onMessage(String message) {
-                if (netServiceEventListener != null) {
-                    netServiceEventListener.onMessage(message);
+                try{
+                    JSONObject messageJSON = new JSONObject(message);
+                    String msg = messageJSON.getString("msg");
+                    UUID uuid = UUID.fromString(messageJSON.getString("uuid"));
+                    String sender = messageJSON.getString("sender");
+                    if(!messageUUIDs.contains(uuid)) {
+                        if (netServiceEventListener != null) {
+                            netServiceEventListener.onMessage(msg, uuid, sender);
+                        }
+                    }
+                } catch (JSONException e) {
+                    e.printStackTrace();
                 }
             }
 
             @Override
             public void onClose(int code, String reason, boolean remote) {
-
+                shutdown();
             }
 
             @Override
@@ -374,7 +393,7 @@ public class NetService extends Service {
     }
 
     public interface NetServiceEventListener {
-        void onMessage(String message);
+        void onMessage(String message, UUID uuid, String sender);
 
         int SHUTDOWN_P2P_DISABLED = 1;
         int SHUTDOWN_OTHER_ERROR = 2;
@@ -387,7 +406,17 @@ public class NetService extends Service {
     }
 
     public void sendMessage(String message) {
-        client.send(message);
+        JSONObject messageJSON = new JSONObject();
+        try {
+            UUID msgUUID = UUID.randomUUID();
+            messageJSON.put("msg",message);
+            messageJSON.put("uuid",msgUUID.toString());
+            messageJSON.put("sender",myDeviceName);
+            client.send(messageJSON.toString());
+            messageUUIDs.add(msgUUID);
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
     }
 
     public class NetServiceBinder extends Binder {

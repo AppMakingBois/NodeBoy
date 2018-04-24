@@ -35,8 +35,8 @@ public class ChatActivity extends AppCompatActivity {
             netService = binder.getNetService();
             netService.setNetServiceEventListener(new NetService.NetServiceEventListener() {
                 @Override
-                public void onMessage(String message) {
-                    insertIncomingMessage("yeet", message);
+                public void onMessage(String message, UUID uuid, String sender) {
+                    insertIncomingMessage(sender, message);
                 }
 
                 @Override
