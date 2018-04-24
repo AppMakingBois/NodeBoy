@@ -146,7 +146,7 @@ public class ChatActivity extends AppCompatActivity {
         if(boundToNetService){
             if(!message.isEmpty()){
             netService.sendMessage(message);
-                insertOutgoingMessage("TODO implement some real name system",message);
+                insertOutgoingMessage(netService.getMyDeviceName(),message);
                 ((EditText)findViewById(R.id.chatBox)).setText("");
             }
         }

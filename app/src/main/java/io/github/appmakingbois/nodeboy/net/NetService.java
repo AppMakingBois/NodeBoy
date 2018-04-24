@@ -277,6 +277,7 @@ public class NetService extends Service {
                     UUID uuid = UUID.fromString(messageJSON.getString("uuid"));
                     String sender = messageJSON.getString("sender");
                     if(!messageUUIDs.contains(uuid)) {
+                        messageUUIDs.add(uuid);
                         if (netServiceEventListener != null) {
                             netServiceEventListener.onMessage(msg, uuid, sender);
                         }
@@ -390,6 +391,14 @@ public class NetService extends Service {
             mBuilder.setChannelId(CHANNEL_ID);
         }
         mNotificationManager.notify(NOTIFICATION_ID, mBuilder.build());
+    }
+
+    public String getMyDeviceName(){
+        return myDeviceName;
+    }
+
+    public String getMyHardwareAddress(){
+        return myHardwareAddress;
     }
 
     public interface NetServiceEventListener {
