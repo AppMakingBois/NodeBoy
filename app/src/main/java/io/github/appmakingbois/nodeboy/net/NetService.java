@@ -136,18 +136,21 @@ public class NetService extends Service {
         isServer = info.isGroupOwner;
         try {
             if (isServer) {
-                server = new NodeBoyServer(new InetSocketAddress(SERVER_PORT));
+                Log.d("server","This device is the server");
+                server = new NodeBoyServer(new InetSocketAddress(info.groupOwnerAddress,SERVER_PORT));
                 client = makeClient(new URI("ws://localhost:" + SERVER_PORT));
+                Log.d("client","Client connecting to localhost:"+SERVER_PORT);
             }
             else {
                 client = makeClient(new URI("ws://" + info.groupOwnerAddress.getHostAddress() + ":" + SERVER_PORT));
+                Log.d("client","Client connecting to "+info.groupOwnerAddress.getHostAddress()+":"+SERVER_PORT);
             }
         }
         catch (URISyntaxException e) {
             e.printStackTrace();
         }
         if(isServer){
-            server.start();
+            server.run();
         }
         client.connect();
         currentState = STATE_RUNNING;
@@ -210,6 +213,7 @@ public class NetService extends Service {
             @Override
             public void onOpen(ServerHandshake handshakedata) {
                 //yeet, we are connected
+                Log.d("client","Client is connected");
             }
 
             @Override
@@ -226,7 +230,7 @@ public class NetService extends Service {
 
             @Override
             public void onError(Exception ex) {
-
+                ex.printStackTrace();
             }
         };
     }
