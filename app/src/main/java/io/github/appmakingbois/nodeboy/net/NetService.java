@@ -21,6 +21,8 @@ import android.support.annotation.RequiresApi;
 import android.support.v4.app.NotificationCompat;
 import android.util.Log;
 
+import org.java_websocket.WebSocket;
+import org.java_websocket.handshake.ClientHandshake;
 import org.java_websocket.handshake.ServerHandshake;
 
 import java.io.IOException;
@@ -141,23 +143,26 @@ public class NetService extends Service {
             if (isServer) {
                 Log.d("inet","IPv4? "+String.valueOf(info.groupOwnerAddress instanceof Inet4Address));
                 Log.d("server","This device is the server");
-                server = new NodeBoyServer(new InetSocketAddress(info.groupOwnerAddress,SERVER_PORT));
+                server = makeServer(new InetSocketAddress(info.groupOwnerAddress,SERVER_PORT));
                 server.start();
                 URI clientURI = new URI("ws://" + info.groupOwnerAddress.getHostAddress() + ":" + SERVER_PORT);
                 client = makeClient(clientURI);
-                Log.d("client","Client connecting to "+clientURI.toASCIIString());
+                Log.d("client","Client pointing to "+clientURI.toASCIIString());
             }
             else {
                 Log.d("inet","IPv4? "+String.valueOf(info.groupOwnerAddress instanceof Inet4Address));
                 URI clientURI = new URI("ws://" + info.groupOwnerAddress.getHostAddress() + ":" + SERVER_PORT);
                 client = makeClient(clientURI);
-                Log.d("client","Client connecting to "+clientURI.toASCIIString());
+                Log.d("client","Client pointing to "+clientURI.toASCIIString());
+                Log.d("client","Client attempting to connect");
+                client.connect();
             }
         }
         catch (URISyntaxException e) {
             e.printStackTrace();
         }
-        client.connect();
+
+        //client.connect();
         currentState = STATE_RUNNING;
         putNotification(currentState, 0);
         started = true;
@@ -211,6 +216,40 @@ public class NetService extends Service {
         finally {
             stopSelf();
         }
+    }
+
+    private NodeBoyServer makeServer(@NonNull InetSocketAddress socketAddress){
+        return new NodeBoyServer(socketAddress) {
+            @Override
+            public void onOpen(WebSocket conn, ClientHandshake handshake) {
+                Log.d("server", "New connection from " + handshake.getResourceDescriptor());
+            }
+
+            @Override
+            public void onClose(WebSocket conn, int code, String reason, boolean remote) {
+                Log.d("server", "Connection closed: " + conn.getRemoteSocketAddress() + " (" + reason + ")");
+            }
+
+            @Override
+            public void onMessage(WebSocket conn, String message) {
+                //when we receive a message, rebroadcast it to all connected clients
+                broadcast(message);
+                Log.d("server", "New message: " + message);
+            }
+
+            @Override
+            public void onError(WebSocket conn, Exception ex) {
+                Log.e("server", "Error occurred!!");
+                ex.printStackTrace();
+            }
+
+            @Override
+            public void onStart() {
+                Log.d("server", "Server started");
+                Log.d("client","Client attempting to connect");
+                client.connect();
+            }
+        };
     }
 
     private NodeBoyClient makeClient(@NonNull URI uri) {

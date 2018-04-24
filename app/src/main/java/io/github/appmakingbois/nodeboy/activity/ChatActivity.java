@@ -97,7 +97,7 @@ public class ChatActivity extends AppCompatActivity {
 
     public void onNewIntent(Intent intent){
         if(intent!=null){
-            if(intent.getAction()!=null && intent.getAction().equalsIgnoreCase(getString(R.string.action_request_stop))){
+            if(intent.getBooleanExtra("shutdown_requested",false)){
                 shutdownRequest();
             }
         }
@@ -177,9 +177,11 @@ public class ChatActivity extends AppCompatActivity {
         TextView receivedTimeDisplay = messageView.findViewById(R.id.receivedTime);
         Date time = new Date();
         receivedTimeDisplay.setText(time.getHours()+":"+time.getMinutes());
-        container.addView(messageView);
-        ScrollView chatScrollView = findViewById(R.id.chatScrollView);
-        scrollDown(chatScrollView);
+        runOnUiThread(() -> {
+            container.addView(messageView);
+            ScrollView chatScrollView = findViewById(R.id.chatScrollView);
+            scrollDown(chatScrollView);
+        });
     }
     private void insertIncomingMessage(String senderID, String messageBody){
         LayoutInflater inflater = getLayoutInflater();
@@ -192,9 +194,12 @@ public class ChatActivity extends AppCompatActivity {
         TextView receivedTimeDisplay = messageView.findViewById(R.id.receivedTime);
         Date time = new Date();
         receivedTimeDisplay.setText(time.getHours()+":"+time.getMinutes());
-        container.addView(messageView);
-        ScrollView chatScrollView = findViewById(R.id.chatScrollView);
-        scrollDown(chatScrollView);
+        runOnUiThread(() -> {
+            container.addView(messageView);
+            ScrollView chatScrollView = findViewById(R.id.chatScrollView);
+            scrollDown(chatScrollView);
+        });
+
     }
 
     /*private static class ShutdownBroadcastReceiver extends BroadcastReceiver{

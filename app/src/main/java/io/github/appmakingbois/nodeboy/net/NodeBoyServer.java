@@ -9,34 +9,21 @@ import org.java_websocket.server.WebSocketServer;
 import java.net.InetSocketAddress;
 
 
-public class NodeBoyServer extends WebSocketServer {
+public abstract class NodeBoyServer extends WebSocketServer {
     @Override
-    public void onOpen(WebSocket conn, ClientHandshake handshake) {
-        Log.d("server","New connection from "+handshake.getResourceDescriptor());
-    }
+    public abstract void onOpen(WebSocket conn, ClientHandshake handshake);
 
     @Override
-    public void onClose(WebSocket conn, int code, String reason, boolean remote) {
-        Log.d("server","Connection closed: "+conn.getRemoteSocketAddress()+" ("+reason+")");
-    }
+    public abstract void onClose(WebSocket conn, int code, String reason, boolean remote);
 
     @Override
-    public void onMessage(WebSocket conn, String message) {
-        //when we receive a message, rebroadcast it to all connected clients
-        broadcast(message);
-        Log.d("server","New message: "+message);
-    }
+    public abstract void onMessage(WebSocket conn, String message);
 
     @Override
-    public void onError(WebSocket conn, Exception ex) {
-        Log.e("server","Error occurred!!");
-        ex.printStackTrace();
-    }
+    public abstract void onError(WebSocket conn, Exception ex);
 
     @Override
-    public void onStart() {
-        Log.d("server","Server started");
-    }
+    public abstract void onStart();
 
     public NodeBoyServer(InetSocketAddress address){
         super(address);
