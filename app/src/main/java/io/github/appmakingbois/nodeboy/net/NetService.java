@@ -9,6 +9,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.graphics.Color;
+import android.net.Uri;
 import android.net.wifi.p2p.WifiP2pInfo;
 import android.net.wifi.p2p.WifiP2pManager;
 import android.os.Binder;
@@ -23,6 +24,7 @@ import android.util.Log;
 import org.java_websocket.handshake.ServerHandshake;
 
 import java.io.IOException;
+import java.net.Inet4Address;
 import java.net.InetSocketAddress;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -134,23 +136,26 @@ public class NetService extends Service {
         registerReceiver(receiver, filter);
 
         isServer = info.isGroupOwner;
+
         try {
             if (isServer) {
+                Log.d("inet","IPv4? "+String.valueOf(info.groupOwnerAddress instanceof Inet4Address));
                 Log.d("server","This device is the server");
                 server = new NodeBoyServer(new InetSocketAddress(info.groupOwnerAddress,SERVER_PORT));
-                client = makeClient(new URI("ws://localhost:" + SERVER_PORT));
-                Log.d("client","Client connecting to localhost:"+SERVER_PORT);
+                server.start();
+                URI clientURI = new URI("ws://" + info.groupOwnerAddress.getHostAddress() + ":" + SERVER_PORT);
+                client = makeClient(clientURI);
+                Log.d("client","Client connecting to "+clientURI.toASCIIString());
             }
             else {
-                client = makeClient(new URI("ws://" + info.groupOwnerAddress.getHostAddress() + ":" + SERVER_PORT));
-                Log.d("client","Client connecting to "+info.groupOwnerAddress.getHostAddress()+":"+SERVER_PORT);
+                Log.d("inet","IPv4? "+String.valueOf(info.groupOwnerAddress instanceof Inet4Address));
+                URI clientURI = new URI("ws://" + info.groupOwnerAddress.getHostAddress() + ":" + SERVER_PORT);
+                client = makeClient(clientURI);
+                Log.d("client","Client connecting to "+clientURI.toASCIIString());
             }
         }
         catch (URISyntaxException e) {
             e.printStackTrace();
-        }
-        if(isServer){
-            server.run();
         }
         client.connect();
         currentState = STATE_RUNNING;
