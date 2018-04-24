@@ -137,7 +137,25 @@ public class ChatActivity extends AppCompatActivity {
         returnToMain();
     }
 
+    public void onPause(){
+        if(boundToNetService) {
+            unbindService(netServiceConnection);
+        }
+        super.onPause();
+    }
+
+    public void onResume(){
+        if(!boundToNetService){
+            Intent serviceIntent = new Intent(this, NetService.class);
+            bindService(serviceIntent,netServiceConnection,0);
+        }
+        super.onResume();
+    }
+
     public void onDestroy(){
+        if(boundToNetService && netService!=null){
+            unbindService(netServiceConnection);
+        }
         super.onDestroy();
     }
 

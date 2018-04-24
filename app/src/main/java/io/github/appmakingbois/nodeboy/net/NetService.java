@@ -232,11 +232,13 @@ public class NetService extends Service {
             @Override
             public void onOpen(WebSocket conn, ClientHandshake handshake) {
                 Log.d("server", "New connection from " + handshake.getResourceDescriptor());
+                putNotification(STATE_RUNNING,this.getConnections().size());
             }
 
             @Override
             public void onClose(WebSocket conn, int code, String reason, boolean remote) {
                 Log.d("server", "Connection closed: " + conn.getRemoteSocketAddress() + " (" + reason + ")");
+                putNotification(STATE_RUNNING,this.getConnections().size());
             }
 
             @Override
