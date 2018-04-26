@@ -57,6 +57,19 @@
             app:layout_constraintTop_toBottomOf="@+id/label_this_device"
             android:layout_marginLeft="8dp"/>
 
+        <TextView
+            android:id="@+id/textView3"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
+            android:layout_marginTop="8dp"
+            android:text="@string/devices_found"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/label_this_device_address"
+            android:layout_marginLeft="8dp" />
+
         <ProgressBar
             android:id="@+id/progress_waiting_for_device_info"
             style="?android:attr/progressBarStyle"
@@ -69,17 +82,27 @@
             app:layout_constraintTop_toTopOf="@+id/label_waiting_for_device_info"
             android:layout_marginLeft="8dp"/>
 
+        <ProgressBar
+            android:id="@+id/connecting_progress"
+            style="?android:attr/progressBarStyleHorizontal"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:indeterminate="true"
+            android:visibility="invisible"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/textView3" />
+
         <ScrollView
             android:id="@+id/device_list_scrollview"
             android:layout_width="0dp"
             android:layout_height="0dp"
             android:layout_marginBottom="8dp"
             android:layout_marginEnd="8dp"
-            android:layout_marginTop="16dp"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/progress_waiting_for_device_info"
+            app:layout_constraintTop_toBottomOf="@+id/connecting_progress"
             android:layout_marginRight="8dp">
 
             <LinearLayout
@@ -92,8 +115,7 @@
                 android:orientation="vertical"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintStart_toStartOf="parent">
-            </LinearLayout>
+                app:layout_constraintStart_toStartOf="parent"></LinearLayout>
 
         </ScrollView>
 

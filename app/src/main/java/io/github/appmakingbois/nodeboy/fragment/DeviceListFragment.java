@@ -198,7 +198,7 @@ public class DeviceListFragment extends Fragment {
     }
 
     private void onClickDevice(@NonNull WifiP2pDevice device){
-        Toast.makeText(activity,"You pressed "+device.deviceAddress,Toast.LENGTH_SHORT).show();
+        //Toast.makeText(activity,"You pressed "+device.deviceAddress,Toast.LENGTH_SHORT).show();
         //todo attempt connecting here
         if(state==NOT_CONNECTED){
             //let's attempt to connect
@@ -206,6 +206,7 @@ public class DeviceListFragment extends Fragment {
             cfg.deviceAddress = device.deviceAddress;
             cfg.groupOwnerIntent = 0;
             state = CONNECTING;
+            startConnectionProgress();
             manager.connect(channel, cfg, new WifiP2pManager.ActionListener() {
                 @Override
                 public void onSuccess() {
@@ -216,6 +217,7 @@ public class DeviceListFragment extends Fragment {
                 @Override
                 public void onFailure(int reason) {
                     state = NOT_CONNECTED;
+                    stopConnectionProgress();
                     if(reason==WifiP2pManager.P2P_UNSUPPORTED){
                         activity.displayFragment(P2PFailFragment.newInstance(P2PFailFragment.P2P_REASON_UNSUPPORTED));
                         return;
@@ -224,6 +226,18 @@ public class DeviceListFragment extends Fragment {
                 }
             });
         }
+    }
+
+    private void startConnectionProgress(){
+        activity.runOnUiThread(() -> {
+            activity.findViewById(R.id.connecting_progress).setVisibility(View.VISIBLE);
+        });
+    }
+
+    private void stopConnectionProgress(){
+        activity.runOnUiThread(() -> {
+            activity.findViewById(R.id.connecting_progress).setVisibility(View.INVISIBLE);
+        });
     }
 
     private void startChatActivity(){
