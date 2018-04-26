@@ -291,7 +291,10 @@ public class NetService extends Service {
 
             @Override
             public void onClose(int code, String reason, boolean remote) {
-                shutdown();
+                Intent stopIntent = new Intent(getApplicationContext(), ChatActivity.class);
+                stopIntent.putExtra("shutdown_now", true);
+                stopIntent.setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
+                startActivity(stopIntent);
             }
 
             @Override

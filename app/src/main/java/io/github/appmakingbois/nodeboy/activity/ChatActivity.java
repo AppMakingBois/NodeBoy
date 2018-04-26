@@ -61,6 +61,9 @@ public class ChatActivity extends AppCompatActivity {
             if(getIntent().getBooleanExtra("shutdown_requested",false)){
                 shutdownRequest();
             }
+            if(getIntent().getBooleanExtra("shutdown_now",false)){
+                shutdown();
+            }
         }
         EditText chatBox = findViewById(R.id.chatBox);
 
